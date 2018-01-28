@@ -1,0 +1,24 @@
+from sofos import models
+
+
+# Create your models here !!
+
+# class Erg(models.Model):
+#     epo = models.CharField('Επώνυμο', max_length=30, unique=True)
+#     ono = models.CharField('Όνομα', max_length=30)
+
+#     class Meta:
+#         unique_together = ['epo', 'ono']
+#         table_label = 'Εργαζόμενοι'
+
+#     def __str__(self):
+#         return '%s %s' % (self.epo, self.ono)
+
+
+# class Company(models.Model):
+#     age = models.IntegerField('Ηλικία')
+#     xristis = models.CharField('Χρήστης', max_length=30)
+#     erg = models.ForeignKey(Erg, 'Εργαζόμενος')
+
+#     class Meta:
+#         table_label = 'Εταιρεία'

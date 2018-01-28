@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+# import models as mb
+from shutil import copyfile
+import os
+import sys
+import sofos
+BDIR = os.path.dirname(sofos.__file__)
+TEMPLATE_PATH = os.path.join(BDIR, "templates")
+
+
+if __name__ == '__main__':
+    print('Generating project')
+    counter = 0
+    dir1 = sys.argv[1]
+    inst_dir = os.path.abspath(dir1)
+    if not os.path.exists(inst_dir):
+        os.mkdir(inst_dir)
+    SRC = os.path.join(TEMPLATE_PATH, 'models.tmpl')
+    for elm in ('manage', 'main_rc', 'models', 'main', 'mdi_child', 'settings'):
+        src = os.path.join(TEMPLATE_PATH, '%s.tmpl' % elm)
+        dst = os.path.join(inst_dir, '%s.py' % elm)
+        if not os.path.exists(dst):
+            copyfile(src, dst)
+            print('created %s' % dst)
+            counter += 1
+    sqrc = os.path.join(TEMPLATE_PATH, 'main.qrc')
+    dqrc = os.path.join(inst_dir, 'main.qrc')
+    if not os.path.exists(dqrc):
+        copyfile(sqrc, dqrc)
+        print('created %s' % dqrc)
+        counter += 1
+    rrrc = os.path.join(TEMPLATE_PATH, 'readme.txt')
+    drrc = os.path.join(inst_dir, 'readme.txt')
+    if not os.path.exists(drrc):
+        copyfile(rrrc, drrc)
+        print('created %s' % drrc)
+        counter += 1
+    img = 'images'
+    simg = os.path.join(TEMPLATE_PATH, 'images')
+    dimg = os.path.join(inst_dir, 'images')
+    if not os.path.exists(dimg):
+        os.mkdir(dimg)
+    listdir = os.listdir(simg)
+    print(simg, dimg, listdir)
+    for file in listdir:
+        copyfile(os.path.join(simg, file), os.path.join(dimg, file))
+        print('copied %s' % file)
+        counter += 1
+    print('%s files created !!!' % counter)
