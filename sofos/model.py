@@ -2,6 +2,7 @@
 import os.path
 import sqlite3
 from . import gr
+
 DELETE, INSERT, UPDATE = range(3)
 
 
@@ -194,6 +195,7 @@ class Model():
 
     @property
     def select_all_cols_rows(self):
+        '''Returns dictionary with columns rows'''
         sql = 'SELECT * FROM %s' % self._table
         adic = select_cols_rows(self._dbf, sql)
         adic['table'] = self._table

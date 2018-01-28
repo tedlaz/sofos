@@ -24,3 +24,6 @@ class Company(models.Model):
 
     class Meta:
         table_label = 'Εταιρεία'
+
+    def __str__(self):
+        return self.id

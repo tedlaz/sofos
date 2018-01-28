@@ -11,7 +11,7 @@ import PyQt5.QtGui as Qg
 from . import gr
 from . import model as md
 
-
+CONFIRMATIONS = True
 GRLOCALE = Qc.QLocale(Qc.QLocale.Greek, Qc.QLocale.Greece)
 MSG_RESET_DATE = u'Με δεξί κλίκ του ποντικιού μηδενίζει'
 MIN_HEIGHT = 30
@@ -434,16 +434,14 @@ class TComboDB(Qw.QComboBox):
 
 
 class AutoForm(Qw.QDialog):
-    def __init__(self, dbf, table, idv=None, parent=None):
+    def __init__(self, dbf, model, idv=None, parent=None):
         super().__init__(parent)
         self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self._parent = parent
         self._dbf = dbf
-        self._table = table
         self._id = idv
-        self.model = md.Model(dbf, table)
-        self.metadata = self.model.metadata
-        self.setWindowTitle('{}: {}'.format(self.metadata['tablelbl'],
+        self.model = model
+        self.setWindowTitle('{}: {}'.format(model.table_label(),
                                             idv if idv else 'Νέα εγγραφή'))
         self.widgets = {}
         main_layout = Qw.QVBoxLayout()
@@ -470,15 +468,16 @@ class AutoForm(Qw.QDialog):
             self._fill()
 
     def _create_fields(self):
-        lbs = self.metadata['colslbl']
-        for i, fld in enumerate(self.model.fields):
-            self.widgets[fld] = wselector(fld, self)
+        lbs = self.model.field_labels()
+        self.widgets['id'] = TInteger(parent=self)
+        self.widgets['id'].setVisible(False)
+        for i, fld in enumerate(self.model.fields()):
+            self.widgets[fld] = wselector(self.model.field(fld), self)
             self.fld_layout.insertRow(i, Qw.QLabel(lbs[fld]),
                                       self.widgets[fld])
-        self.widgets['id'].setEnabled(False)
 
     def _fill(self):
-        self.vals = self.model.search_by_id(self._id)
+        self.vals = self.model.search_by_id(self._dbf, self._id)
         for key in self.vals:
             self.widgets[key].set(self.vals[key])
 
@@ -486,13 +485,14 @@ class AutoForm(Qw.QDialog):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
-        status, lid = self.model.save(data)
+        status, lid = self.model.save_meta(self._dbf, data)
         if status:
             if lid:
                 msg = 'Νέα εγγραφή καταχωρήθηκε με Νο: %s' % lid
             else:
                 msg = 'Ενημερώθηκε η εγγραφή Νο: %s' % data['id']
-            Qw.QMessageBox.information(self, "Αποθήκευση", msg)
+            if CONFIRMATIONS:
+                Qw.QMessageBox.information(self, "Αποθήκευση", msg)
             self.accept()
         else:
             Qw.QMessageBox.information(self, "Αποθήκευση", lid)
@@ -520,16 +520,14 @@ class FindForm(AutoForm):
 
 
 class AutoFormTable(Qw.QDialog):
-    def __init__(self, dbf, table, parent=None):
+    def __init__(self, dbf, model, parent=None):
         super().__init__(parent)
         # self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self.resize(550, 400)
         self._parent = parent
         self._dbf = dbf
-        self._table = table
-        self.model = md.Model(dbf, table)
-        self.meta = self.model.metadata
-        self.setWindowTitle('{}'.format(self.meta['tablelbl']))
+        self.model = model  # md.Model(dbf, table)
+        self.setWindowTitle('{}'.format(self.model.table_label()))
         layout = Qw.QVBoxLayout()
         self.setLayout(layout)
         self.tbl = self._init_table()
@@ -554,7 +552,7 @@ class AutoFormTable(Qw.QDialog):
         Qw.QDialog.keyPressEvent(self, ev)
 
     def _new_record(self):
-        dialog = AutoForm(self._dbf, self._table, parent=self)
+        dialog = AutoForm(self._dbf, self.model, parent=self)
         if dialog.exec_() == Qw.QDialog.Accepted:
             self._populate()
         else:
@@ -565,32 +563,37 @@ class AutoFormTable(Qw.QDialog):
         return self.tbl.item(self.tbl.currentRow(), 0).text()
 
     def _edit_record(self):
-        dialog = AutoForm(self._dbf, self._table, self.id, parent=self)
+        dialog = AutoForm(self._dbf, self.model, self.id, parent=self)
         if dialog.exec_() == Qw.QDialog.Accepted:
             self._populate()
         else:
             return False
 
     def _get_data(self):
-        return self.model.select_all_cols_rows
+        return self.model.select_all(self._dbf)
 
     def _populate(self):
         data = self._get_data()
         self.tbl.setRowCount(data['rownum'])
         self.tbl.setColumnCount(data['colnum'])
-        self.tbl.setHorizontalHeaderLabels(self.model.metadata['colslbld'])
+        dlbl = self.model.field_labels()
+        labels = [dlbl[i] for i in data['cols']]
+        self.tbl.setHorizontalHeaderLabels(labels)
         for i, row in enumerate(data['rows']):
             for j, col in enumerate(data['cols']):
                 val = row[j]
-                if data['cols'][j].startswith('id'):
+                field = data['cols'][j]
+                if field.startswith('id'):
                     item = self._intItem(val)
-                elif data['cols'][j].endswith('_id'):
-                    item = self._keyItem(val, data['cols'][j][:-3])
-                elif data['cols'][j].endswith('_cd'):
-                    item = self._keyItem(val, data['cols'][j][:-3])
-                elif data['cols'][j][0] == 'n':
+                # elif data['cols'][j].endswith('_id'):
+                #     item = self._keyItem(val, data['cols'][j][:-3])
+                # elif data['cols'][j].endswith('_cd'):
+                #     item = self._keyItem(val, data['cols'][j][:-3])
+                elif self.model.field(field).typos == 'INTEGER':
+                    item = self._intItem(val)
+                elif self.model.field(field).typos == 'DECIMAL':
                     item = self._numItem(val)
-                elif data['cols'][j][0] == 'd':
+                elif self.model.field(field).typos == 'DATE':
                     item = SortWidgetItem(gr.date2gr(val), val)
                 else:
                     item = self._strItem(val)
@@ -638,7 +641,7 @@ class AutoFormTable(Qw.QDialog):
         return item
 
     def userFriendlyCurrentFile(self):
-        return self._table
+        return self.model.table_label()
 
 
 class AutoFormTableFound(AutoFormTable):
@@ -671,12 +674,13 @@ class SortWidgetItem(Qw.QTableWidgetItem):
 class TTextButton(Qw.QWidget):
     valNotFound = Qc.pyqtSignal(str)
 
-    def __init__(self, idv, table, parent):
+    def __init__(self, idv, model, parent):
         """parent must have ._dbf"""
         super().__init__(parent)
         self._parent = parent
-        self._table = table
-        self._model = md.Model(parent._dbf, table)
+        # self._table = table
+        self._dbf = parent._dbf
+        self._model = model
         self.dval = None
         self._state = None
         # Create Gui
@@ -709,8 +713,8 @@ class TTextButton(Qw.QWidget):
 
     def _button_clicked(self):
         self.button.setFocus()
-        vals = self._model.select_all
-        ffind = AutoFormTableFound(self._parent._dbf, self._table, '', self)
+        vals = self._model.select_all(self._dbf)
+        ffind = AutoFormTableFound(self._parent._dbf, self.model, '', self)
         if ffind.exec_() == Qw.QDialog.Accepted:
             self.set(ffind.id)
         else:
@@ -726,7 +730,7 @@ class TTextButton(Qw.QWidget):
         """
         :param text: text separated by space multi-search values 'va1 val2 ..'
         """
-        vals = self._model.search(text)
+        vals = self._model.search(self._dbf, text)
         if vals['rownum'] == 1:
             self.set(vals['rows'][0][0])
         elif vals['rownum'] > 1:
@@ -742,7 +746,7 @@ class TTextButton(Qw.QWidget):
     def set(self, idv):
         if idv is None or idv == 'None':
             return
-        val = self._model.search_by_id(idv)
+        val = self._model.search_by_id(self._dbf, idv)
         self._set_state(1 if val else 0)
         rpr = self._model.rpr(idv)
         self.txt = rpr
@@ -756,28 +760,28 @@ class TTextButton(Qw.QWidget):
         return self.idv
 
 
-def wselector(fld, parent):
-    if fld == 'id':
+def wselector(field, parent):
+    if field.qt_widget == 'int':
         return TInteger(parent=parent)
-    elif fld.endswith('_id'):
-        return TTextButton(None, fld[:-3], parent)
-    elif fld.endswith('_cd'):
-        return TComboDB(None, fld[:-3], parent)
-    elif fld.startswith('b'):
+    elif field.qt_widget == 'text_button':
+        return TTextButton(None, field.ftable.table_name(), parent)
+    elif field.qt_widget == 'combo':
+        return TComboDB(None, field.ftable.table_name(), parent)
+    elif field.qt_widget == 'check_box':
         return TCheckbox(parent=parent)
-    elif fld.startswith('d'):
+    elif field.qt_widget == 'date':
         return TDate(parent=parent)
-    elif fld.startswith('e'):
+    elif field.qt_widget == 'date_or_empty':
         return TDateEmpty(parent=parent)
-    elif fld.startswith('i'):
-        return TInteger(parent=parent)
-    elif fld.startswith('n'):
+    elif field.qt_widget == 'num':
         return TNumeric(parent=parent)
-    elif fld.startswith('q'):
+    elif field.qt_widget == 'text_num':
         return TTextlineNum(parent=parent)
-    elif fld.startswith('t'):
+    elif field.qt_widget == 'text':
         return TText(parent=parent)
-    elif fld.startswith('w'):
+    elif field.qt_widget == 'week_days':
         return TWeekdays(parent=parent)
+    elif field.qt_widget == 'str':
+        return TTextLine(parent=parent)
     else:
         return TTextLine(parent=parent)

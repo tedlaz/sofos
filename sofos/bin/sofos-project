@@ -8,8 +8,11 @@ BDIR = os.path.dirname(sofos.__file__)
 TEMPLATE_PATH = os.path.join(BDIR, "templates")
 
 
-if __name__ == '__main__':
-    print('Generating project')
+def main():
+    print('Generating a new project')
+    if len(sys.argv) <= 1:
+        print('path is missing')
+        return False
     counter = 0
     dir1 = sys.argv[1]
     inst_dir = os.path.abspath(dir1)
@@ -47,3 +50,6 @@ if __name__ == '__main__':
         print('copied %s' % file)
         counter += 1
     print('%s files created !!!' % counter)
+
+if __name__ == '__main__':
+    main()
