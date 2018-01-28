@@ -2,6 +2,7 @@
 PyQt5 database application generator using django like models
 
 [![Python Version](https://img.shields.io/badge/python-3.6-brightgreen.svg)](https://python.org)
+[![PyPi Version](https://img.shields.io/pypi/v/nine.svg)]
 
 Requirements : python 3.6, PyQt5
 
