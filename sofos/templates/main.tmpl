@@ -3,32 +3,32 @@ import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
 import PyQt5.QtWidgets as Qw
 import main_rc
-from sofos.qt import AutoFormTable
+from sofos import qt
+from sofos import models as sofosmd
+from sofos import create_database as cd
 from settings import setup
+import models as md
 
 
 class MainWindow(Qw.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.tables = sofosmd.model_tables(md)
         self.settings = Qc.QSettings()
         self.mdiArea = Qw.QMdiArea()
         self.mdiArea.setHorizontalScrollBarPolicy(Qc.Qt.ScrollBarAsNeeded)
         self.mdiArea.setVerticalScrollBarPolicy(Qc.Qt.ScrollBarAsNeeded)
         self.setCentralWidget(self.mdiArea)
-
         self.mdiArea.subWindowActivated.connect(self.updateMenus)
         self.windowMapper = Qc.QSignalMapper(self)
         self.windowMapper.mapped[Qw.QWidget].connect(self.setActiveSubWindow)
-
         self.createActions()
         self.createMenus()
         self.createToolBars()
         self.createStatusBar()
         self.updateMenus()
-
         self.readSettings()
-
-        self.setWindowTitle(setup['application_title'])
+        self.setWindowTitle('%s %s' % (setup['application_title'], self.dbf))
 
     def closeEvent(self, event):
         self.mdiArea.closeAllSubWindows()
@@ -39,25 +39,28 @@ class MainWindow(Qw.QMainWindow):
             event.accept()
 
     def newFile(self):
+        options = Qw.QFileDialog.Options()
+        filename, _ = Qw.QFileDialog.getSaveFileName(self,
+                "Create New Database",
+                '',
+                "sql3 App Files (*.sql3)", options=options)
+        if filename:
+            cd.create_tables(filename, md)
+            # self.dbf = filename
+        self.setWindowTitle('%s %s' % (setup['application_title'], self.dbf))
 
+    def newFiled(self, tbl):
+        print(tbl)
         child = self.createMdiChild()
         # child.newFile()
         child.show()
 
     def open(self):
-        fileName, _ = Qw.QFileDialog.getOpenFileName(self)
-        if fileName:
-            existing = self.findMdiChild(fileName)
-            if existing:
-                self.mdiArea.setActiveSubWindow(existing)
-                return
-
-            child = self.createMdiChild()
-            if child.loadFile(fileName):
-                self.statusBar().showMessage("File loaded", 2000)
-                child.show()
-            else:
-                child.close()
+        filename, _ = Qw.QFileDialog.getOpenFileName(self,
+        'Open database', self.dbf, "sql3 App Files (*.sql3)")
+        if filename:
+            print(filename)
+            # self.dbf = filename
 
     def save(self):
         if self.activeMdiChild() and self.activeMdiChild().save():
@@ -132,69 +135,92 @@ class MainWindow(Qw.QMainWindow):
             self.windowMapper.setMapping(action, window)
 
     def createMdiChild(self):
-        child = AutoFormTable(self.dbf, 'trand')
+        child = qt.AutoFormTable(self.dbf, 'trand')
         self.mdiArea.addSubWindow(child)
-
         #child.copyAvailable.connect(self.cutAct.setEnabled)
         #child.copyAvailable.connect(self.copyAct.setEnabled)
-
         return child
 
     def createActions(self):
-        self.newAct = Qw.QAction(Qg.QIcon(':/images/new.png'), "&New", self,
-                shortcut=Qg.QKeySequence.New, statusTip="Create a new file",
-                triggered=self.newFile)
+        self.newAct = Qw.QAction(Qg.QIcon(':/images/new.png'),
+                                 "&New",
+                                 self,
+                                 shortcut=Qg.QKeySequence.New,
+                                 statusTip="Create a new database",
+                                 triggered=self.newFile)
 
-        self.openAct = Qw.QAction(Qg.QIcon(':/images/open.png'), "&Open...", self,
-                shortcut=Qg.QKeySequence.Open, statusTip="Open an existing file",
-                triggered=self.open)
+        self.openAct = Qw.QAction(Qg.QIcon(':/images/open.png'),
+                                  "&Open...",
+                                  self,
+                                  shortcut=Qg.QKeySequence.Open,
+                                  statusTip="Open an existing database",
+                                  triggered=self.open)
 
-        self.saveAct = Qw.QAction(Qg.QIcon(':/images/save.png'), "&Save", self,
-                shortcut=Qg.QKeySequence.Save,
-                statusTip="Save the document to disk", triggered=self.save)
+        self.saveAct = Qw.QAction(Qg.QIcon(':/images/save.png'),
+                                  "&Save",
+                                  self,
+                                  shortcut=Qg.QKeySequence.Save,
+                                  statusTip="Save the document to disk",
+                                  triggered=self.save)
 
-        self.saveAsAct = Qw.QAction("Save &As...", self,
-                shortcut=Qg.QKeySequence.SaveAs,
-                statusTip="Save the document under a new name",
-                triggered=self.saveAs)
+        self.saveAsAct = Qw.QAction("Save &As...",
+                                    self,
+                                    shortcut=Qg.QKeySequence.SaveAs,
+                                    statusTip="Save the document under a new name",
+                                    triggered=self.saveAs)
 
-        self.exitAct = Qw.QAction("E&xit", self, shortcut=Qg.QKeySequence.Quit,
-                statusTip="Exit the application",
-                triggered=Qw.QApplication.instance().closeAllWindows)
+        self.exitAct = Qw.QAction("E&xit",
+                                  self,
+                                  shortcut=Qg.QKeySequence.Quit,
+                                  statusTip="Exit the application",
+                                  triggered=Qw.QApplication.instance().closeAllWindows)
 
-        self.cutAct = Qw.QAction(Qg.QIcon(':/images/cut.png'), "Cu&t", self,
-                shortcut=Qg.QKeySequence.Cut,
-                statusTip="Cut the current selection's contents to the clipboard",
-                triggered=self.cut)
+        self.cutAct = Qw.QAction(Qg.QIcon(':/images/cut.png'),
+                                 "Cu&t",
+                                 self,
+                                 shortcut=Qg.QKeySequence.Cut,
+                                 statusTip="Cut the current selection's contents to the clipboard",
+                                 triggered=self.cut)
 
-        self.copyAct = Qw.QAction(Qg.QIcon(':/images/copy.png'), "&Copy", self,
-                shortcut=Qg.QKeySequence.Copy,
-                statusTip="Copy the current selection's contents to the clipboard",
-                triggered=self.copy)
+        self.copyAct = Qw.QAction(Qg.QIcon(':/images/copy.png'),
+                                  "&Copy",
+                                  self,
+                                  shortcut=Qg.QKeySequence.Copy,
+                                  statusTip="Copy the current selection's contents to the clipboard",
+                                  triggered=self.copy)
 
-        self.pasteAct = Qw.QAction(Qg.QIcon(':/images/paste.png'), "&Paste", self,
-                shortcut=Qg.QKeySequence.Paste,
-                statusTip="Paste the clipboard's contents into the current selection",
-                triggered=self.paste)
+        self.pasteAct = Qw.QAction(Qg.QIcon(':/images/paste.png'),
+                                   "&Paste",
+                                   self,
+                                   shortcut=Qg.QKeySequence.Paste,
+                                   statusTip="Paste the clipboard's contents into the current selection",
+                                   triggered=self.paste)
 
-        self.closeAct = Qw.QAction("Cl&ose", self,
-                statusTip="Close the active window",
-                triggered=self.mdiArea.closeActiveSubWindow)
+        self.closeAct = Qw.QAction("Cl&ose",
+                                   self,
+                                   statusTip="Close the active window",
+                                   triggered=self.mdiArea.closeActiveSubWindow)
 
-        self.closeAllAct = Qw.QAction("Close &All", self,
-                statusTip="Close all the windows",
-                triggered=self.mdiArea.closeAllSubWindows)
+        self.closeAllAct = Qw.QAction("Close &All",
+                                      self,
+                                      statusTip="Close all the windows",
+                                      triggered=self.mdiArea.closeAllSubWindows)
 
-        self.tileAct = Qw.QAction("&Tile", self, statusTip="Tile the windows",
-                triggered=self.mdiArea.tileSubWindows)
+        self.tileAct = Qw.QAction("&Tile",
+                                  self,
+                                  statusTip="Tile the windows",
+                                  triggered=self.mdiArea.tileSubWindows)
 
-        self.cascadeAct = Qw.QAction("&Cascade", self,
-                statusTip="Cascade the windows",
-                triggered=self.mdiArea.cascadeSubWindows)
+        self.cascadeAct = Qw.QAction("&Cascade",
+                                     self,
+                                     statusTip="Cascade the windows",
+                                     triggered=self.mdiArea.cascadeSubWindows)
 
-        self.nextAct = Qw.QAction("Ne&xt", self, shortcut=Qg.QKeySequence.NextChild,
-                statusTip="Move the focus to the next window",
-                triggered=self.mdiArea.activateNextSubWindow)
+        self.nextAct = Qw.QAction("Ne&xt",
+                                  self,
+                                  shortcut=Qg.QKeySequence.NextChild,
+                                  statusTip="Move the focus to the next window",
+                                  triggered=self.mdiArea.activateNextSubWindow)
 
         self.previousAct = Qw.QAction("Pre&vious", self,
                 shortcut=Qg.QKeySequence.PreviousChild,
@@ -211,6 +237,19 @@ class MainWindow(Qw.QMainWindow):
         self.aboutQtAct = Qw.QAction("About &Qt", self,
                 statusTip="Show the Qt library's About box",
                 triggered=Qw.QApplication.instance().aboutQt)
+
+        self.tblact = {}
+        self.mapper = {}
+        for tbl in self.tables:
+            self.mapper[tbl] = Qc.QSignalMapper(self)
+            self.tblact[tbl] = Qw.QAction(tbl, self)
+            self.mapper[tbl].setMapping(self.tblact[tbl], tbl)
+            self.tblact[tbl].triggered.connect(self.mapper[tbl].map)
+            self.mapper[tbl].mapped['QString'].connect(self.newFiled)
+            # self.tblact[tbl] = Qw.QAction('%stab' % tbl,
+            #                               self,
+            #                               statusTip='Table %s' % tbl,
+            #                               triggered=self.newFiled)
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
@@ -231,6 +270,10 @@ class MainWindow(Qw.QMainWindow):
         self.windowMenu = self.menuBar().addMenu("&Window")
         self.updateWindowMenu()
         self.windowMenu.aboutToShow.connect(self.updateWindowMenu)
+
+        self.tablemenu = self.menuBar().addMenu("&Tables")
+        for act in self.tblact:
+            self.tablemenu.addAction(self.tblact[act])
 
         self.menuBar().addSeparator()
 
@@ -272,7 +315,6 @@ class MainWindow(Qw.QMainWindow):
 
     def findMdiChild(self, fileName):
         canonicalFilePath = Qc.QFileInfo(fileName).canonicalFilePath()
-
         for window in self.mdiArea.subWindowList():
             if window.widget().currentFile() == canonicalFilePath:
                 return window
@@ -290,9 +332,7 @@ class MainWindow(Qw.QMainWindow):
 
 
 if __name__ == '__main__':
-
     import sys
-
     app = Qw.QApplication(sys.argv)
     app.setOrganizationName(setup["organization_name"])
     app.setOrganizationDomain(setup["organization_domain"])

@@ -10,23 +10,19 @@ if sys.hexversion < 0x3040000:
     exit(1)
 
 
-with open("requirements.txt", "rt") as f:
-    requirements = f.read().splitlines()
-
-
-with open("README.md", "rt") as f:
-    readme = f.read()
+# with open("README.md", "rt") as f:
+#     readme = f.read()
 
 
 setup(name='sofos',
-      version='0.2',
+      version='0.5',
       description='Create Easily Gui Database Applications',
-      long_description=readme,
+      long_description='',
       url='https://github.com/tedlaz/sofos',
       keywords=["database", "gui", "pyqt5"],
       author='Ted Lazaros',
       author_email='tedlaz@gmail.com',
-      install_requires=requirements,
+      install_requires=['PyQt5'],
       license='GPLv3',
       packages=['sofos'],
       scripts=['sofos/bin/sofos_project'],

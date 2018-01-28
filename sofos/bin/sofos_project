@@ -16,7 +16,7 @@ if __name__ == '__main__':
     if not os.path.exists(inst_dir):
         os.mkdir(inst_dir)
     SRC = os.path.join(TEMPLATE_PATH, 'models.tmpl')
-    for elm in ('manage', 'main_rc', 'models', 'main', 'mdi_child', 'settings'):
+    for elm in ('manage', 'main_rc', 'models', 'main', 'settings'):
         src = os.path.join(TEMPLATE_PATH, '%s.tmpl' % elm)
         dst = os.path.join(inst_dir, '%s.py' % elm)
         if not os.path.exists(dst):
