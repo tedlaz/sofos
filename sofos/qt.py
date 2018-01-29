@@ -9,7 +9,7 @@ import PyQt5.QtWidgets as Qw
 import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
 from . import gr
-from . import model as md
+
 
 CONFIRMATIONS = True
 GRLOCALE = Qc.QLocale(Qc.QLocale.Greek, Qc.QLocale.Greece)
@@ -400,11 +400,10 @@ class TCombo(Qw.QComboBox):
 
 class TComboDB(Qw.QComboBox):
     '''Combo'''
-    def __init__(self, idv, table, parent):
+    def __init__(self, idv, model, parent):
         super().__init__(parent)
         self._parent = parent
-        self._table = table
-        self._model = md.Model(parent._dbf, table)
+        self._model = model
         self.populate()
         self.set(idv)  # val must be a valid id
 
@@ -421,13 +420,13 @@ class TComboDB(Qw.QComboBox):
         2.fill Combo
         3.set current index to initial value
         """
-        vlist = self._model.select_all_cols_rows['rows']
+        vlist = self._model.select_all(self._parent._dbf)
         self.index2id = {}
         self.id2index = {}
         self.addItem('')
         self.index2id[0] = ''
         self.id2index[''] = 0
-        for i, elm in enumerate(vlist):
+        for i, elm in enumerate(vlist['rows']):
             self.addItem('%s' % elm[1])
             self.index2id[i+1] = elm[0]
             self.id2index[elm[0]] = i+1
@@ -549,6 +548,8 @@ class AutoFormTable(Qw.QDialog):
         '''use enter or return for fast selection'''
         if ev.key() in (Qc.Qt.Key_Enter, Qc.Qt.Key_Return):
             self._edit_record()
+        elif ev.key() == Qc.Qt.Key_Insert:
+            self._new_record()
         Qw.QDialog.keyPressEvent(self, ev)
 
     def _new_record(self):
@@ -640,19 +641,20 @@ class AutoFormTable(Qw.QDialog):
         item = Qw.QTableWidgetItem(stv)
         return item
 
-    def userFriendlyCurrentFile(self):
+    def table_label(self):
         return self.model.table_label()
 
 
 class AutoFormTableFound(AutoFormTable):
-    def __init__(self, dbf, table, search_string, parent=None):
+    def __init__(self, dbf, model, search_string, parent=None):
+        print('asdfsadfsdf sadfsadf')
         self.search_string = search_string
-        super().__init__(dbf, table, parent)
+        super().__init__(dbf, model, parent)
         self.tbl.cellDoubleClicked.disconnect(self._edit_record)
         self.tbl.cellDoubleClicked.connect(self.accept)
 
     def _get_data(self):
-        return self.model.search(self.search_string)
+        return self.model.search(self._dbf, self.search_string)
 
     def keyPressEvent(self, ev):
         '''use enter or return for fast selection'''
@@ -678,12 +680,34 @@ class TTextButton(Qw.QWidget):
         """parent must have ._dbf"""
         super().__init__(parent)
         self._parent = parent
-        # self._table = table
         self._dbf = parent._dbf
         self._model = model
-        self.dval = None
-        self._state = None
+        self.txt_initial = ''
         # Create Gui
+        self._create_gui()
+        if idv:
+            self.set(idv)
+
+    def set(self, idv):
+        if idv is None or idv == 'None':
+            return
+        dicval = self._model.search_by_id(self._dbf, idv)
+        self._set_state(1 if dicval else 0)
+        self.txt_initial = self._rpr(dicval)
+        self.rpr = self.txt_initial
+        self.text.setText(self.txt_initial)
+        self.setToolTip(self.txt_initial)
+        self.text.setCursorPosition(0)
+        self.idv = dicval['id']
+
+    def _rpr(self, dicval):
+        ltxt = []
+        for key in dicval:
+            if key != 'id':
+                ltxt.append(str(dicval[key]))
+        return ' '.join(ltxt)
+
+    def _create_gui(self):
         self.text = Qw.QLineEdit(self)
         self.button = Qw.QToolButton(self)
         self.button.setArrowType(Qc.Qt.DownArrow)
@@ -694,13 +718,9 @@ class TTextButton(Qw.QWidget):
         self.setLayout(layout)
         layout.addWidget(self.text)
         layout.addWidget(self.button)
-        # connections
+        # Connections
         self.text.textChanged.connect(self._text_changed)
         self.button.clicked.connect(self._button_clicked)
-        # Try to set value
-        self.idv = None
-        if idv:
-            self.set(idv)
 
     def _set_state(self, state):
         self._state = state
@@ -709,20 +729,20 @@ class TTextButton(Qw.QWidget):
         self.button.setStyleSheet(sred if state == 0 else sgreen)
 
     def _text_changed(self):
-        self._set_state(0 if self.txt != self.text.text() else 1)
+        self._set_state(0 if self.txt_initial != self.text.text() else 1)
 
     def _button_clicked(self):
         self.button.setFocus()
-        vals = self._model.select_all(self._dbf)
-        ffind = AutoFormTableFound(self._parent._dbf, self.model, '', self)
+        # vals = self._model.select_all(self._dbf)
+        ffind = AutoFormTableFound(self._parent._dbf, self._model, '', self)
         if ffind.exec_() == Qw.QDialog.Accepted:
             self.set(ffind.id)
         else:
-            self._set_state(1 if self.txt == self.text.text() else 0)
+            self._set_state(1 if self.txt_initial == self.text.text() else 0)
 
     def keyPressEvent(self, ev):
         if ev.key() == Qc.Qt.Key_Enter or ev.key() == Qc.Qt.Key_Return:
-            if self.txt != self.text.text():
+            if self.txt_initial != self.text.text():
                 self._find(self.text.text())
         return Qw.QWidget.keyPressEvent(self, ev)
 
@@ -743,18 +763,7 @@ class TTextButton(Qw.QWidget):
         else:
             self.valNotFound.emit(self.text.text())
 
-    def set(self, idv):
-        if idv is None or idv == 'None':
-            return
-        val = self._model.search_by_id(self._dbf, idv)
-        self._set_state(1 if val else 0)
-        rpr = self._model.rpr(idv)
-        self.txt = rpr
-        self.rpr = rpr
-        self.text.setText(rpr)
-        self.setToolTip(rpr)
-        self.text.setCursorPosition(0)
-        self.idv = val['id']
+
 
     def get(self):
         return self.idv
@@ -764,9 +773,9 @@ def wselector(field, parent):
     if field.qt_widget == 'int':
         return TInteger(parent=parent)
     elif field.qt_widget == 'text_button':
-        return TTextButton(None, field.ftable.table_name(), parent)
+        return TTextButton(None, field.ftable, parent)
     elif field.qt_widget == 'combo':
-        return TComboDB(None, field.ftable.table_name(), parent)
+        return TComboDB(None, field.ftable, parent)
     elif field.qt_widget == 'check_box':
         return TCheckbox(parent=parent)
     elif field.qt_widget == 'date':

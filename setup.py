@@ -15,7 +15,7 @@ if sys.hexversion < 0x3040000:
 
 
 setup(name='sofos',
-      version='0.5',
+      version='0.6',
       description='Create Easily Gui Database Applications',
       long_description='',
       url='https://github.com/tedlaz/sofos',
@@ -27,13 +27,17 @@ setup(name='sofos',
       packages=['sofos'],
       scripts=['sofos/bin/sofos-project'],
       package_data={'sofos': ['templates/images/*.png', 'templates/*.*']},
-      classifiers=["Development Status :: 5 - Production/Stable",
+      classifiers=["Development Status :: 4 - Beta",
                    "Environment :: Console",
+                   "Environment :: X11 Applications :: Qt",
+                   "Environment :: Win32 (MS Windows)",
+                   "Intended Audience :: Developers",
                    "Natural Language :: English",
                    "Operating System :: OS Independent",
                    "Programming Language :: Python",
                    "Programming Language :: Python :: 3",
                    "Programming Language :: Python :: 3 :: Only",
+                   "Programming Language :: Python :: 3.5",
                    "Programming Language :: Python :: 3.6",
-                   "Topic :: Utilities"]
+                   "Topic :: Software Development :: Build Tools"]
       )

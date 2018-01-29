@@ -14,13 +14,36 @@ def sql_database_create(models):
 
 def create_tables(dbf, models, print_only=False):
     sql = sql_database_create(models)
-    print('Database file: %s' % dbf)
-    print(sql)
+    # print('Database file: %s' % dbf)
+    # print(sql)
     if print_only:
         return True
     try:
         with sqlite3.connect(dbf) as con:
             con.executescript(sql)
-    except Exception:
-        return False
-    return True
+    except sqlite3.Error as err:
+        return False, '%s\n%s' % (sql, err)
+    except Exception as err:
+        return False, err
+    return True, 'Database file %s created !!' % dbf
+
+
+def insel(lin):
+    SEL = ('INSERT INTO', 'BEGIN', 'COMMIT')
+    for elm in SEL:
+        if lin.startswith(elm):
+            return True
+    return False
+
+
+def backup_database(dbf, filename):
+    try:
+        with sqlite3.connect(dbf) as con:
+            data = '\n'.join([i for i in con.iterdump() if insel(i)])
+    except sqlite3.Error as err:
+        return False, '%s\n%s' % (sql, err)
+    except Exception as err:
+        return False, err
+    with open(filename, 'w') as fil:
+        fil.write(data)
+    return True, 'Database %s backup saved to %s' % (dbf, filename)

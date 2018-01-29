@@ -50,6 +50,21 @@ class CharField(Field):
         return True
 
 
+class CharNumField(Field):
+    typos = 'TEXT'
+
+    def __init__(self, label, max_length, null=False, unique=False,
+                 min_length=0):
+        super().__init__(label, null, unique, qt_widget='text_num')
+        self.min_length = min_length
+        self.max_length = max_length
+
+    def validate(self, value):
+        lval = len(value)
+        if lval < self.min_length or lval > self.max_length:
+            return False
+        return True
+
 class DateField(Field):
     typos = 'DATE'
 
@@ -64,6 +79,22 @@ class DateField(Field):
         if lval < self.min_length or lval > self.max_length:
             return False
         if value[4] != '-':
+            return False
+        return True
+
+
+class DateEmptyField(Field):
+    typos = 'DATETIME'
+
+    def __init__(self, label, max_length=10, null=False, unique=False,
+                 min_length=0):
+        super().__init__(label, null, unique, qt_widget='date_or_empty')
+        self.min_length = min_length
+        self.max_length = max_length
+
+    def validate(self, value):
+        lval = len(value)
+        if lval < self.min_length or lval > self.max_length:
             return False
         return True
 
@@ -88,14 +119,28 @@ class DecimalField(Field):
         return int(value)
 
 
+class WeekdaysField(Field):
+    typos = 'TEXT'
+
+    def __init__(self, label, max_length=30, null=False, unique=False,
+                 min_length=0):
+        super().__init__(label, null, unique, qt_widget='week_days')
+        self.min_length = min_length
+        self.max_length = max_length
+
+    def validate(self, value):
+        lval = len(value)
+        if lval < self.min_length or lval > self.max_length:
+            return False
+        return True
+
+
 class ForeignKey(Field):
     typos = 'INTEGER'
 
-    def __init__(self, ftable, label, null=False, unique=False,
-                 qt_widget='text_button'):
+    def __init__(self, ftable, label, qt_widget='text_button',
+                 null=False, unique=False):
         super().__init__(label, null, unique, qt_widget=qt_widget)
-        # if not isinstance(ftable, Field):
-        #   raise ValueError
         self.ftable = ftable
 
     def sql(self, field):

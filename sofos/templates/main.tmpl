@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import sys
+import os
+from datetime import datetime
 import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
 import PyQt5.QtWidgets as Qw
@@ -9,6 +12,7 @@ from sofos import create_database as cd
 from settings import setup
 import models as md
 qt.CONFIRMATIONS = setup['confirmations']
+
 
 class MainWindow(Qw.QMainWindow):
     def __init__(self):
@@ -39,26 +43,41 @@ class MainWindow(Qw.QMainWindow):
 
     def newFile(self):
         options = Qw.QFileDialog.Options()
+        filtyp = "sql3 App Files (*.%s)" % setup['db_suffix']
         filename, _ = Qw.QFileDialog.getSaveFileName(
             self,
             "Create New Database",
             '',
-            "sql3 App Files (*.sql3)",
+            filtyp,
             options=options)
         if filename:
-            cd.create_tables(filename, md)
-            self.update_dbf(filename)
+            if not filename.endswith('.%s' % setup['db_suffix']):
+                filename = '%s.%s' % (filename, setup['db_suffix'])
+            success, msg = cd.create_tables(filename, md)
+            if success:
+                self.update_dbf(filename)
+                Qw.QMessageBox.information(
+                    self,
+                    setup['db_creation_title'],
+                    msg)
+            else:
+                os.remove(filename)
+                Qw.QMessageBox.critical(
+                    self,
+                    setup['db_creation_title'],
+                    str(msg))
 
     def update_dbf(self, dbf):
         self.dbf = dbf
         self.setWindowTitle('%s %s' % (setup['application_title'], dbf))
 
     def open(self):
+        filtyp = "sql3 App Files (*.%s)" % setup['db_suffix']
         filename, _ = Qw.QFileDialog.getOpenFileName(
             self,
             'Open database',
             self.dbf,
-            "sql3 App Files (*.sql3)")
+            filtyp)
         if filename:
             self.update_dbf(filename)
 
@@ -93,7 +112,7 @@ class MainWindow(Qw.QMainWindow):
         self.separatorAct.setVisible(len(windows) != 0)
         for i, window in enumerate(windows):
             child = window.widget()
-            text = "%d %s" % (i + 1, child.userFriendlyCurrentFile())
+            text = "%d %s" % (i + 1, child.table_label())
             if i < 9:
                 text = '&' + text
             action = self.windowMenu.addAction(text)
@@ -106,6 +125,23 @@ class MainWindow(Qw.QMainWindow):
         child = qt.AutoFormTable(self.dbf, self.tables[table])
         self.mdiArea.addSubWindow(child)
         child.show()
+
+    def backup(self):
+        tim = datetime.now().isoformat()
+        tsr = tim.replace('-', '').replace('T', '').replace(':', '')[:12]
+        filename = '%s.%s.sql' % (self.dbf, tsr)
+        success, msg = cd.backup_database(self.dbf, filename)
+        if success:
+            Qw.QMessageBox.information(
+                self,
+                'Database Backup',
+                msg)
+        else:
+            os.remove(filename)
+            Qw.QMessageBox.critical(
+                self,
+                'Database Backup Error',
+                str(msg))
 
     def createActions(self):
         self.newAct = Qw.QAction(
@@ -123,6 +159,12 @@ class MainWindow(Qw.QMainWindow):
             shortcut=Qg.QKeySequence.Open,
             statusTip="Open an existing database",
             triggered=self.open)
+
+        self.backupAct = Qw.QAction(
+            "Backup Database",
+            self,
+            statusTip="Backup current database",
+            triggered=self.backup)
 
         self.exitAct = Qw.QAction(
             "E&xit",
@@ -189,6 +231,7 @@ class MainWindow(Qw.QMainWindow):
         for tbl in self.tables:
             self.mapper[tbl] = Qc.QSignalMapper(self)
             self.tblact[tbl] = Qw.QAction(tbl, self)
+            self.tblact[tbl].setStatusTip('open %s' % tbl)
             self.mapper[tbl].setMapping(self.tblact[tbl], tbl)
             self.tblact[tbl].triggered.connect(self.mapper[tbl].map)
             self.mapper[tbl].mapped['QString'].connect(self.createAutoFormTbl)
@@ -199,6 +242,7 @@ class MainWindow(Qw.QMainWindow):
         self.fileMenu.addAction(self.openAct)
         self.fileMenu.addSeparator()
         action = self.fileMenu.addAction("Switch layout direction")
+        self.fileMenu.addAction(self.backupAct)
         action.triggered.connect(self.switchLayoutDirection)
         self.fileMenu.addAction(self.exitAct)
 
@@ -262,7 +306,6 @@ class MainWindow(Qw.QMainWindow):
 
 
 def run():
-    import sys
     app = Qw.QApplication(sys.argv)
     app.setOrganizationName(setup["organization_name"])
     app.setOrganizationDomain(setup["organization_domain"])
