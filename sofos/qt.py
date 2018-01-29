@@ -690,6 +690,7 @@ class TTextButton(Qw.QWidget):
 
     def set(self, idv):
         if idv is None or idv == 'None':
+            self.idv = ''
             return
         dicval = self._model.search_by_id(self._dbf, idv)
         self._set_state(1 if dicval else 0)
@@ -762,8 +763,6 @@ class TTextButton(Qw.QWidget):
                 self._set_state(1 if self.txt == self.text.text() else 0)
         else:
             self.valNotFound.emit(self.text.text())
-
-
 
     def get(self):
         return self.idv
