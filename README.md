@@ -8,7 +8,7 @@ python3 -m venv ~/venv/sofosvenv
 source ~/venv/sofosvenv/bin/activate
 pip install sofos
 
-sofos_project sofos_test
+sofos-project sofos_test
 cd sofos_test
 python main.py
 ```
