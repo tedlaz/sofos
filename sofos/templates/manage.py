@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import models as mb
-from sofos import create_database as cd
+from sofos import database_functions as cd
 
 
 if __name__ == '__main__':

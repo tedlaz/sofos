@@ -1,7 +1,6 @@
 """Put your settings here"""
 help_description = """
-The <b>Test App</b> example demonstrates how to write multiple
-document interface applications using Qt.
+Here you put a short description about your <b>Test Application</b>.
 """
 
 setup = dict(application_title='Δοκιμαστική εφαρμογή',

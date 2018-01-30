@@ -233,6 +233,14 @@ class TInteger(TTextLine):
         self.setValidator(Qg.QRegExpValidator(rval))
         self.setAlignment(Qc.Qt.AlignRight)
 
+    def set(self, txt):
+        if txt is not None:
+            ttxt = '%s' % txt
+            self.setText(ttxt.strip())
+        else:
+            self.setText('')
+        self.setCursorPosition(0)
+
 
 class TTextlineNum(TTextLine):
     '''Text field with numeric chars only left aligned.'''
@@ -240,6 +248,14 @@ class TTextlineNum(TTextLine):
         super().__init__(val, parent)
         rval = Qc.QRegExp('(\d*)([1-9])(\d*)')
         self.setValidator(Qg.QRegExpValidator(rval))
+
+    def set(self, txt):
+        if txt is not None:
+            ttxt = '%s' % txt
+            self.setText(ttxt.strip())
+        else:
+            self.setText('')
+        self.setCursorPosition(0)
 
 
 class TYesNoCombo(Qw.QComboBox):
@@ -484,6 +500,7 @@ class AutoForm(Qw.QDialog):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
+        print(data)
         status, lid = self.model.save_meta(self._dbf, data)
         if status:
             if lid:
@@ -755,7 +772,7 @@ class TTextButton(Qw.QWidget):
         if vals['rownum'] == 1:
             self.set(vals['rows'][0][0])
         elif vals['rownum'] > 1:
-            ffind = AutoFormTableFound(self._parent._dbf, self._table,
+            ffind = AutoFormTableFound(self._parent._dbf, self._model,
                                        text, self)
             if ffind.exec_() == Qw.QDialog.Accepted:
                 self.set(ffind.id)

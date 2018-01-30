@@ -1,6 +1,9 @@
+"""Library to acces database"""
 import os.path
 import sqlite3
 from . import gr
+import hashlib
+IGNORE = 'models'
 DELETE, INSERT, UPDATE = range(3)
 
 
@@ -76,3 +79,88 @@ def select_cols_rows(dbf, sql):
             return None
         row = cur.fetchall()
     return {'cols': col, 'rows': row, 'rownum': len(row), 'colnum': len(col)}
+
+
+def calc_md5(models):
+    """models: models.py from our project folder """
+    tables = [cls for cls in dir(models) if (cls[0] != '_' and cls != IGNORE)]
+    tdic = {}
+    for cls in tables:
+        aaa = getattr(models, cls)
+        tdic[aaa.table_name()] = aaa
+    arr = []
+    for key in tdic:
+        arr.append(key)
+        arr += tdic[key].fields()
+    arr.sort()
+    md5 = hashlib.md5()
+    md5.update(str(arr).encode())
+    return md5.hexdigest()
+
+
+def create_z_table(models):
+    md5 = calc_md5(models)
+    sql = ("CREATE TABLE IF NOT EXISTS z ("
+           "key TEXT NOT NULL PRIMARY KEY, "
+           "val TEXT);\n"
+           "INSERT INTO z VALUES ('md5', '%s');\n" % md5)
+    return sql
+
+
+def check_database_against_models(dbf, models):
+    md5_from_models = calc_md5(models)
+    sql = "SELECT val FROM z WHERE key='md5'"
+    try:
+        md5_from_db = select_one(dbf, sql)['val']
+    except TypeError:
+        return False
+    # print(md5_from_models, md5_from_db)
+    return md5_from_models == md5_from_db
+
+
+def sql_database_create(models):
+    """models: models.py from our project folder """
+    classes = [cls for cls in dir(models) if (cls[0] != '_' and cls != IGNORE)]
+    tsql = 'BEGIN TRANSACTION;\n\n'
+    for cls in classes:
+        aaa = getattr(models, cls)
+        tsql += aaa.sql_create()
+    tsql += create_z_table(models)
+    return tsql + 'COMMIT;'
+
+
+def create_tables(dbf, models, print_only=False):
+    sql = sql_database_create(models)
+    # print('Database file: %s' % dbf)
+    # print(sql)
+    if print_only:
+        return True
+    try:
+        with sqlite3.connect(dbf) as con:
+            con.executescript(sql)
+    except sqlite3.Error as err:
+        return False, '%s\n%s' % (sql, err)
+    except Exception as err:
+        return False, err
+    return True, 'Database file %s created !!' % dbf
+
+
+def insel(lin):
+    SEL = ('INSERT INTO', 'BEGIN', 'COMMIT')
+    for elm in SEL:
+        if lin.startswith(elm):
+            return True
+    return False
+
+
+def backup_database(dbf, filename):
+    try:
+        with sqlite3.connect(dbf) as con:
+            data = '\n'.join([i for i in con.iterdump() if insel(i)])
+    except sqlite3.Error as err:
+        return False, '%s\n' % err
+    except Exception as err:
+        return False, err
+    with open(filename, 'w') as fil:
+        fil.write(data)
+    return True, 'Database %s backup saved to %s' % (dbf, filename)

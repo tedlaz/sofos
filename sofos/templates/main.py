@@ -8,7 +8,7 @@ import PyQt5.QtWidgets as Qw
 import main_rc
 from sofos import qt
 from sofos import models as sofosmd
-from sofos import create_database as cd
+from sofos import database_functions as cd
 from settings import setup
 import models as md
 qt.CONFIRMATIONS = setup['confirmations']
@@ -17,6 +17,7 @@ qt.CONFIRMATIONS = setup['confirmations']
 class MainWindow(Qw.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.setWindowIcon(Qg.QIcon(':/images/app.png'))
         self.tables = sofosmd.model_tables(md)  # Object {tablename: Model}
         self.settings = Qc.QSettings()
         self.mdiArea = Qw.QMdiArea()
@@ -47,7 +48,7 @@ class MainWindow(Qw.QMainWindow):
         filename, _ = Qw.QFileDialog.getSaveFileName(
             self,
             "Create New Database",
-            '',
+            self.dbf,
             filtyp,
             options=options)
         if filename:
@@ -68,8 +69,17 @@ class MainWindow(Qw.QMainWindow):
                     str(msg))
 
     def update_dbf(self, dbf):
-        self.dbf = dbf
-        self.setWindowTitle('%s %s' % (setup['application_title'], dbf))
+        if not cd.check_database_against_models(dbf, md):
+            Qw.QMessageBox.critical(
+            self,
+            "Πρόβλημα",
+            "Η βάση δεδομένων %s δεν είναι συμβατή" % dbf)
+            self.dbf = ''
+            self.tablemenu.setEnabled(False)
+        else:
+            self.dbf = dbf
+            self.tablemenu.setEnabled(True)
+        self.setWindowTitle('%s %s' % (setup['application_title'], self.dbf))
 
     def open(self):
         filtyp = "sql3 App Files (*.%s)" % setup['db_suffix']

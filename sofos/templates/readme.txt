@@ -2,7 +2,7 @@
 pyuic5 untitled.ui -o output.py
 
 # to compile qrc files:
-pyrcc5 resource_file.qrc -o compiled_resource_file.py
+pyrcc5 main.qrc -o main_rc.py
 
 # file .qrc contains :
 

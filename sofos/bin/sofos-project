@@ -15,41 +15,35 @@ def main():
         return False
     counter = 0
     dir1 = sys.argv[1]
-    inst_dir = os.path.abspath(dir1)
-    if not os.path.exists(inst_dir):
-        os.mkdir(inst_dir)
-    SRC = os.path.join(TEMPLATE_PATH, 'models.tmpl')
-    for elm in ('manage', 'main_rc', 'models', 'main', 'settings'):
-        src = os.path.join(TEMPLATE_PATH, '%s.tmpl' % elm)
-        dst = os.path.join(inst_dir, '%s.py' % elm)
-        if not os.path.exists(dst):
-            copyfile(src, dst)
-            print('created %s' % dst)
-            counter += 1
-    sqrc = os.path.join(TEMPLATE_PATH, 'main.qrc')
-    dqrc = os.path.join(inst_dir, 'main.qrc')
-    if not os.path.exists(dqrc):
-        copyfile(sqrc, dqrc)
-        print('created %s' % dqrc)
+    indir = os.path.abspath(dir1)  # Destination directory
+    # Create destination directory if not exists
+    if not os.path.exists(indir):
+        os.mkdir(indir)
+    # Copy files
+    for fnam in os.listdir(TEMPLATE_PATH):
+        # If fnam is a directory do nothing
+        if os.path.isdir(os.path.join(TEMPLATE_PATH, fnam)):
+            continue
+        copyfile(os.path.join(TEMPLATE_PATH, fnam), os.path.join(indir, fnam))
+        print('copied %s' % fnam)
         counter += 1
-    rrrc = os.path.join(TEMPLATE_PATH, 'readme.txt')
-    drrc = os.path.join(inst_dir, 'readme.txt')
-    if not os.path.exists(drrc):
-        copyfile(rrrc, drrc)
-        print('created %s' % drrc)
-        counter += 1
+    # Copy images
     img = 'images'
-    simg = os.path.join(TEMPLATE_PATH, 'images')
-    dimg = os.path.join(inst_dir, 'images')
+    simg = os.path.join(TEMPLATE_PATH, img)
+    dimg = os.path.join(indir, img)
+    # Create image destination directory if not exists
     if not os.path.exists(dimg):
         os.mkdir(dimg)
-    listdir = os.listdir(simg)
-    print(simg, dimg, listdir)
-    for file in listdir:
+    # Copy image files
+    for file in os.listdir(simg):
+        # If files is a directory do nothing
+        if os.path.isdir(os.path.join(simg, file)):
+            continue
         copyfile(os.path.join(simg, file), os.path.join(dimg, file))
         print('copied %s' % file)
         counter += 1
-    print('%s files created !!!' % counter)
+    print('%s files copied !!!' % counter)
+
 
 if __name__ == '__main__':
     main()
