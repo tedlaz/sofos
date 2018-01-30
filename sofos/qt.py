@@ -500,7 +500,6 @@ class AutoForm(Qw.QDialog):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
-        print(data)
         status, lid = self.model.save_meta(self._dbf, data)
         if status:
             if lid:
@@ -664,7 +663,6 @@ class AutoFormTable(Qw.QDialog):
 
 class AutoFormTableFound(AutoFormTable):
     def __init__(self, dbf, model, search_string, parent=None):
-        print('asdfsadfsdf sadfsadf')
         self.search_string = search_string
         super().__init__(dbf, model, parent)
         self.tbl.cellDoubleClicked.disconnect(self._edit_record)
