@@ -303,6 +303,19 @@ class Model():
         return df.select_cols_rows(dbf, sql)
 
     @classmethod
+    def select_all_new(cls, dbf):
+        table_name = cls.__name__.lower()
+        flds = cls.fields()
+        fld_dic = {table_name: []}
+        for fld in flds:
+            object_fld =  getattr(cls, fld)
+            if object_fld.__class__.__name__ == 'ForeignKey':
+                fld_dic[table_name].append(object_fld.ftable.select_all_new(dbf))
+            else:
+                fld_dic[table_name].append('%s.%s' % (table_name, fld))
+        return fld_dic
+
+    @classmethod
     def search(cls, dbf, search_string):
         """Find records with many key words in search_string"""
         search_list = search_string.split()
