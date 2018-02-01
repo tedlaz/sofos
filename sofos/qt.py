@@ -20,6 +20,8 @@ DATE_MAX_WIDTH = 120
 SQLITE_DATE_FORMAT = 'yyyy-MM-dd'
 GREEK_DATE_FORMAT = 'd/M/yyyy'
 WEEKDAYS = ['Δε', 'Τρ', 'Τε', 'Πέ', 'Πα', 'Σά', 'Κυ']
+WEEKDAYS_FULL = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη',
+                 'Παρασκευή', 'Σάββατο', 'Κυριακή']
 MSG_SELECT_DAYS = 'Επιλέξτε τις Εργάσιμες ημέρες\nΜε δεξί κλικ μηδενίστε'
 BLANK, GREEN = range(2)
 
@@ -541,24 +543,30 @@ class AutoFormTable(Qw.QDialog):
         self.resize(550, 400)
         self._parent = parent
         self._dbf = dbf
-        self.model = model  # md.Model(dbf, table)
+        self.model = model
         self.setWindowTitle('{}'.format(self.model.table_label()))
+        self._create_gui()
+        self._make_connections()
+        self._populate()
+
+    def _make_connections(self):
+        self.bedit.clicked.connect(self._edit_record)
+        self.bnew.clicked.connect(self._new_record)
+        self.tbl.cellDoubleClicked.connect(self._edit_record)
+
+    def _create_gui(self):
         layout = Qw.QVBoxLayout()
         self.setLayout(layout)
         self.tbl = self._init_table()
         layout.addWidget(self.tbl)
         blay = Qw.QHBoxLayout()
         layout.addLayout(blay)
-        self.bedt = Qw.QPushButton('Επεξεργασία')
-        self.bedt.setFocusPolicy(Qc.Qt.NoFocus)
-        blay.addWidget(self.bedt)
+        self.bedit = Qw.QPushButton('Επεξεργασία')
+        self.bedit.setFocusPolicy(Qc.Qt.NoFocus)
+        blay.addWidget(self.bedit)
         self.bnew = Qw.QPushButton('Νέα εγγραφή')
         self.bnew.setFocusPolicy(Qc.Qt.NoFocus)
         blay.addWidget(self.bnew)
-        self.bedt.clicked.connect(self._edit_record)
-        self.bnew.clicked.connect(self._new_record)
-        self.tbl.cellDoubleClicked.connect(self._edit_record)
-        self._populate()
 
     def keyPressEvent(self, ev):
         '''use enter or return for fast selection'''
@@ -587,31 +595,25 @@ class AutoFormTable(Qw.QDialog):
             return False
 
     def _get_data(self):
-        return self.model.select_all(self._dbf)
+        return self.model.select_all_deep(self._dbf)
 
     def _populate(self):
         data = self._get_data()
         self.tbl.setRowCount(data['rownum'])
         self.tbl.setColumnCount(data['colnum'])
-        dlbl = self.model.field_labels()
-        labels = [dlbl[i] for i in data['cols']]
-        self.tbl.setHorizontalHeaderLabels(labels)
+        self.tbl.setHorizontalHeaderLabels(data['labels'])
+        
         for i, row in enumerate(data['rows']):
-            for j, col in enumerate(data['cols']):
+            for j, qt_widget in enumerate(data['qt_widgets_types']):
                 val = row[j]
-                field = data['cols'][j]
-                if field.startswith('id'):
+                if qt_widget == 'int':
                     item = self._intItem(val)
-                # elif data['cols'][j].endswith('_id'):
-                #     item = self._keyItem(val, data['cols'][j][:-3])
-                # elif data['cols'][j].endswith('_cd'):
-                #     item = self._keyItem(val, data['cols'][j][:-3])
-                elif self.model.field(field).typos == 'INTEGER':
-                    item = self._intItem(val)
-                elif self.model.field(field).typos == 'DECIMAL':
+                elif qt_widget == 'num':
                     item = self._numItem(val)
-                elif self.model.field(field).typos == 'DATE':
+                elif qt_widget == 'date':
                     item = SortWidgetItem(gr.date2gr(val), val)
+                elif qt_widget == 'week_days':
+                    item = self._weekdayItem(val)
                 else:
                     item = self._strItem(val)
                 self.tbl.setItem(i, j, item)
@@ -657,6 +659,15 @@ class AutoFormTable(Qw.QDialog):
         item = Qw.QTableWidgetItem(stv)
         return item
 
+    def _weekdayItem(self, strv):
+        weekdays_list = eval(strv)
+        weekdays_string_list = []
+        for i, wday in enumerate(weekdays_list):
+            if wday != 0:
+                weekdays_string_list.append(WEEKDAYS_FULL[i])
+        item = Qw.QTableWidgetItem(', '.join(weekdays_string_list))
+        return item
+
     def table_label(self):
         return self.model.table_label()
 
@@ -669,7 +680,7 @@ class AutoFormTableFound(AutoFormTable):
         self.tbl.cellDoubleClicked.connect(self.accept)
 
     def _get_data(self):
-        return self.model.search(self._dbf, self.search_string)
+        return self.model.search_deep(self._dbf, self.search_string)
 
     def keyPressEvent(self, ev):
         '''use enter or return for fast selection'''
@@ -700,12 +711,13 @@ class TTextButton(Qw.QWidget):
         self.txt_initial = ''
         # Create Gui
         self._create_gui()
-        if idv:
-            self.set(idv)
+        self.set(idv)
 
     def set(self, idv):
-        if idv is None or idv == 'None':
+        # if no Value in idv just return
+        if idv is None or idv == 'None' or idv == '':
             self.idv = ''
+            self._set_state(0)
             return
         dicval = self._model.search_by_id(self._dbf, idv)
         self._set_state(1 if dicval else 0)
@@ -766,7 +778,7 @@ class TTextButton(Qw.QWidget):
         """
         :param text: text separated by space multi-search values 'va1 val2 ..'
         """
-        vals = self._model.search(self._dbf, text)
+        vals = self._model.search_deep(self._dbf, text)
         if vals['rownum'] == 1:
             self.set(vals['rows'][0][0])
         elif vals['rownum'] > 1:

@@ -23,11 +23,11 @@ class Field():
         typ = self.typos
         null = '' if self.null else 'NOT NULL'
         unique = 'UNIQUE' if self.unique else ''
-        default = 'DEFAULT %s' % self.default if self.default is not None else ''
+        defau = 'DEFAULT %s' % self.default if self.default is not None else ''
         tsq = '%s %s' % (field, typ)
         tsq += ' %s' % null if null != '' else ''
         tsq += ' %s' % unique if unique != '' else ''
-        tsq += ' %s' % default if default != '' else ''
+        tsq += ' %s' % defau if defau != '' else ''
         return tsq
 
     def validate(self, value):
@@ -64,6 +64,7 @@ class CharNumField(Field):
         if lval < self.min_length or lval > self.max_length:
             return False
         return True
+
 
 class DateField(Field):
     typos = 'DATE'
@@ -139,8 +140,9 @@ class ForeignKey(Field):
     typos = 'INTEGER'
 
     def __init__(self, ftable, label, qt_widget='text_button',
-                 null=False, unique=False):
-        super().__init__(label, null, unique, qt_widget=qt_widget)
+                 null=False, unique=False, default=None):
+        super().__init__(label, null, unique, qt_widget=qt_widget,
+                         default=default)
         self.ftable = ftable
 
     def sql(self, field):
@@ -225,16 +227,17 @@ class Model():
                 self.id = lastid
 
     @classmethod
-    def save_meta(cls, dbf, dvals):
-        if dvals['id'] is None or dvals['id'] == '':
+    def save_meta(cls, dbf, dva):
+        """dva : dictionary of values"""
+        if dva['id'] is None or dva['id'] == '':
             sqt = 'INSERT INTO %s(%s) VALUES(%s);'
-            flds = ', '.join([i for i in dvals.keys() if i != 'id'])
-            vals = ', '.join(["'%s'" % dvals[i] for i in dvals.keys() if i != 'id'])
-            sql = sqt % (cls.table_name(), flds, vals)
+            flds = ', '.join([i for i in dva.keys() if i != 'id'])
+            vls = ', '.join(["'%s'" % dva[i] for i in dva.keys() if i != 'id'])
+            sql = sqt % (cls.table_name(), flds, vls)
         else:
             sqt = "UPDATE %s SET %s WHERE id='%s';"
-            sts = ', '.join(["%s='%s'" % (i, j) for i, j in dvals.items()])
-            sql = sqt % (cls.table_name(), sts, dvals['id'])
+            sts = ', '.join(["%s='%s'" % (i, j) for i, j in dva.items()])
+            sql = sqt % (cls.table_name(), sts, dva['id'])
         return df.cud(dbf, sql)
 
     @classmethod
@@ -303,17 +306,61 @@ class Model():
         return df.select_cols_rows(dbf, sql)
 
     @classmethod
-    def select_all_new(cls, dbf):
+    def sql_select_all_deep(cls, dbf, field_list=None, label_list=None,
+                            qt_widget_list=None, joins=None):
+        """Returns sql with all relations of table"""
         table_name = cls.__name__.lower()
+        sqt = "SELECT %s\nFROM %s\n%s"
         flds = cls.fields()
         fld_dic = {table_name: []}
+        field_list = field_list or ['%s.id' % table_name]
+        label_list = label_list or ['ΑΑ']
+        qt_widget_list = qt_widget_list or ['int']
+        joins = joins or []
         for fld in flds:
-            object_fld =  getattr(cls, fld)
+            object_fld = getattr(cls, fld)
             if object_fld.__class__.__name__ == 'ForeignKey':
-                fld_dic[table_name].append(object_fld.ftable.select_all_new(dbf))
+                ftbl = object_fld.ftable.table_name()
+                if object_fld.null:
+                    intl = 'LEFT JOIN %s ON %s.id=%s.%s'
+                else:
+                    intl = 'INNER JOIN %s ON %s.id=%s.%s'
+                joins.append(intl % (ftbl, ftbl, table_name, fld))
+                fld_dic[table_name].append(
+                    object_fld.ftable.sql_select_all_deep(
+                        dbf, field_list, label_list, qt_widget_list, joins))
             else:
                 fld_dic[table_name].append('%s.%s' % (table_name, fld))
-        return fld_dic
+                field_list.append('%s.%s' % (table_name, fld))
+                label_list.append(object_fld.label)
+                qt_widget_list.append(object_fld.qt_widget)
+        sql = sqt % (', '.join(field_list), table_name, '\n'.join(joins))
+        return {'sql': sql, 'labels': label_list, 'cols': field_list,
+                'qt_widgets_types': qt_widget_list, 'colnum': len(field_list)}
+
+    @classmethod
+    def deep_fields(cls, lfields=None, llabels=None, lqtwids=None):
+        """Not finished yet"""
+        table_name = cls.__name__.lower()
+        table_flds = cls.fields()
+        lfields = lfields or ['%s.id' % table_name]
+        llabels = llabels or ['Νο']
+        lqtwids = lqtwids or ['int']
+        ljoins = []
+        for field in table_flds:
+            obj_field = getattr(cls, field)
+            if obj_field.__class__.__name__ == 'ForeignKey':
+                fk_table = obj_field.ftable.table_name()
+                if obj_field.null:
+                    pass
+
+    @classmethod
+    def select_all_deep(cls, dbf):
+        data = cls.sql_select_all_deep(dbf)
+        rows = df.select_rows(dbf, data['sql'])
+        data['rows'] = rows
+        data['rownum'] = len(rows)
+        return data
 
     @classmethod
     def search(cls, dbf, search_string):
@@ -332,6 +379,25 @@ class Model():
         sql = sql1 + where + ' AND '.join(search_sql)
         adic = df.select_cols_rows(dbf, sql)
         return adic
+
+    @classmethod
+    def search_deep(cls, dbf, search_string):
+        """Find deep"""
+        search_list = search_string.split()
+        meta = cls.sql_select_all_deep(dbf)
+        search_field = " || ' ' || ".join(meta['cols'])
+        where = ''
+        search_sql = []
+        for search_str in search_list:
+            grup_str = gr.grup(search_str)
+            tstr = " grup(%s) LIKE '%%%s%%'\n" % (search_field, grup_str)
+            search_sql.append(tstr)
+            where = ' WHERE '
+        sql = meta['sql'] + where + ' AND '.join(search_sql)
+        rows = df.select_rows(dbf, sql)
+        meta['rows'] = rows
+        meta['rownum'] = len(rows)
+        return meta
 
 
 def model_tables(models):

@@ -81,6 +81,22 @@ def select_cols_rows(dbf, sql):
     return {'cols': col, 'rows': row, 'rownum': len(row), 'colnum': len(col)}
 
 
+def select_rows(dbf, sql):
+    """Run a select
+        returns [[1, v1, ..], [2, v1, ..], ...]
+    """
+    rows = []
+    with sqlite3.connect(dbf) as con:
+        cur = con.cursor()
+        con.create_function("grup", 1, gr.grup)
+        try:
+            cur.execute(sql)
+        except sqlite3.OperationalError as err:
+            return None, err, sql
+        rows = cur.fetchall()
+    return rows
+
+
 def calc_md5(models):
     """models: models.py from our project folder """
     tables = [cls for cls in dir(models) if (cls[0] != '_' and cls != IGNORE)]
@@ -139,6 +155,7 @@ def create_tables(dbf, models, print_only=False):
         with sqlite3.connect(dbf) as con:
             con.executescript(sql)
     except sqlite3.Error as err:
+        print(sql)
         return False, '%s\n%s' % (sql, err)
     except Exception as err:
         return False, err
