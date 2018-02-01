@@ -79,30 +79,172 @@ class Parartima(models.Model):
         table_label = "Παράρτημα"
 
 
-class ApolysiType(models.Model):
+class ApodoxesType(models.Model):
+    '''Τύπος αποδοχών (Μισθός/Ημερομίσθιο/Ωρομίσθιο)'''
+    apt = models.CharField('Τύπος αποδοχών', max_length=20, unique=True)
+
+    class Meta:
+        table_label = "Τύπος αποδοχών"
+
+
+class SymbasiType(models.Model):
+    '''Τύπος Σύμβασης (Αορίστου/Ορισμένου/Έργου)'''
+    syt = models.CharField('Τύπος σύμβασης', max_length=30, unique=True)
+
+    class Meta:
+        table_label = "Τύπος σύμβασης"
+
+
+class Eidikotita(models.Model):
+    eip = models.CharField('Ειδικότητα', max_length=50, unique=True)
+    eid = models.CharField('Κωδικός ειδικότητας ΙΚΑ', max_length=6)
+
+    class Meta:
+        table_label = "Ειδικότητα εργασίας"
+
+
+class ApasxolisiType(models.Model):
+    """Καθεστώς απασχόλησης Πλήρης/μερική/εκ περιτροπής"""
+    apa = models.CharField('Καθεστώς απασχόλησης', max_length=50, unique=True)
+
+    class Meta:
+        table_label = "Καθεστώς απασχόλησης"
+
+
+class ApoxorisiType(models.Model):
     apt = models.CharField('Τύπος απόλυσης', max_length=50, unique=True)
 
     class Meta:
-        table_label = 'Τύποι απόλυσης'
-
-    def __str__(self):
-        return self.apt
+        table_label = 'Τύπος αποχώρησης'
 
 
 class Proslipsi(models.Model):
     dpr = models.DateField('Ημ/νία πρόσληψης',)
     erg = models.ForeignKey(Erg, 'Εργαζόμενος')
-    ora = models.WeekdaysField('Ημέρες εργασίας')
-    pos = models.DecimalField('Αποδοχές')
+    par = models.ForeignKey(Parartima, 'Παράρτημα',  default=1,
+                            qt_widget='combo')
+    apa = models.ForeignKey(ApasxolisiType, 'Καθεστώς απασχόλησης',
+                            qt_widget='combo', default=1)
+    ert = models.ForeignKey(ErgType, 'Τύπος εργαζομένου',  default=1,
+                            qt_widget='combo')
+    eid = models.ForeignKey(Eidikotita, 'Ειδικότητα')
+    syt = models.ForeignKey(SymbasiType, 'Τύπος σύμβασης',  default=1,
+                            qt_widget='combo')
+    mer = models.WeekdaysField('Ημέρες εργασίας')
+    ora = models.TextField('Πρόγραμμα εργασίας')
+    apt = models.ForeignKey(ApodoxesType, 'Τύπος αποδοχών',  default=1,
+                            qt_widget='combo')
+    amb = models.DecimalField('Αποδοχές')
     dap = models.DateEmptyField('Ημ/νία απόλυσης')
-    apt = models.ForeignKey(ApolysiType, 'Τύπος απόλυσης',
-                            qt_widget='combo', null=True)
+    apot = models.ForeignKey(ApoxorisiType, 'Τύπος απόχώρησης',
+                             qt_widget='combo', null=True)
 
     class Meta:
         table_label = 'Προσλήψεις'
 
-    def __str__(self):
-        return '%s %s' % (self.erg, self.dpr)
+
+class Xrisi(models.Model):
+    """Έτος"""
+    xrisi = models.IntegerField('Χρήση', unique=True)
+
+    class Meta:
+        table_label = "Χρήση"
+
+
+class Minas(models.Model):
+    """Μήνας"""
+    mon = models.CharField('Μήνας', max_length=15, unique=True)
+
+    class Meta:
+        table_label = "Μήνας"
+
+
+class Paroysies(models.Model):
+    """Παρουσίες εργαζομένων"""
+    xri = models.ForeignKey(Xrisi, 'Χρήση', qt_widget='combo')
+    mon = models.ForeignKey(Minas, 'Μήνας', qt_widget='combo')
+
+    class Meta:
+        unique_together = ('xri', 'mon')
+        table_label = "Παρουσίες"
+
+
+class ParoysiaType(models.Model):
+    """Κανονικές/Ασθένεια/Υπερωρίες"""
+    pty = models.CharField('Τύπος παρουσίας', max_length=50, unique=True)
+    kika = models.CharField('Κωδικός ΙΚΑ', max_length=2, unique=True)
+
+    class Meta:
+        table_label = "Τύπος παρουσίας"
+
+
+class ParoysiesDetails(models.Model):
+    """Παρουσίες εργαζομένων αναλυτικά"""
+    mpa = models.ForeignKey(Paroysies, 'Χρήση/Περίοδος', qt_widget='combo')
+    pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
+    pty = models.ForeignKey(ParoysiaType, 'Τύπος παρουσίας', qt_widget='combo')
+    apo = models.DateEmptyField('Από')
+    eos = models.DateEmptyField('Έως')
+    # Κανονικές
+    mno = models.IntegerField('Ημέρες εργασίας', default=0)
+    mad = models.IntegerField('Ημέρες άδειας με αποδοχές', default=0)
+    maa = models.IntegerField('Ημέρες άδειας χωρίς αποδοχές', default=0)
+    ony = models.IntegerField('Ώρες νυχτ.προσαύξησης', default=0)
+    arm = models.IntegerField('Ημέρες αργίας', default=0)
+    aor = models.IntegerField('Ώρες αργίας', default=0)
+    # Ασθένεια
+    ml3 = models.IntegerField('Ημέρες ασθένειας < 3', default=0)
+    mm3 = models.IntegerField('Ημέρες ασθένειας > 3', default=0)
+    mm0 = models.IntegerField('Ημέρες ασθένειας χωρίς αποδοχές', default=0)
+    epi = models.DecimalField('Επίδομα ΙΚΑ')
+    # Υπερωρίες
+    yp1 = models.IntegerField('Υπερωρίες 1 ώρες', default=0)
+    yp2 = models.IntegerField('Υπερωρίες 2 ώρες', default=0)
+
+    class Meta:
+        unique_together = ('mpa', 'pro', 'pty', 'apo')
+        table_label = "Παρουσία εργαζομένου"
+
+
+class MisthodosiaType(models.Model):
+    """Τύπος μισθοδοσίας"""
+    mtp = models.CharField('Τύπος μισθοδοσίας', max_length=30, unique=True)
+    kika = models.CharField('Κωδικός ΙΚΑ', max_length=2, unique=True)
+
+    class Meta:
+        table_label = "Τύπος μισθοδοσίας"
+
+
+class Misthodosia(models.Model):
+    """Μισθοδοσία"""
+    xri = models.ForeignKey(Xrisi, 'Χρήση', qt_widget='combo')
+    mon = models.ForeignKey(Minas, 'Μήνας', qt_widget='combo')
+    mtp = models.ForeignKey(MisthodosiaType, 'Τύπος μισθοδοσίας', default=1,
+                            qt_widget='combo')
+    pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
+    apo = models.DateEmptyField('Από')
+    eos = models.DateEmptyField('Έως')
+    mika = models.IntegerField('Ημέρες ΙΚΑ', default=0)
+    marg = models.IntegerField('Ημέρες Κυριακών/Αργιών', default=0)
+    oarg = models.IntegerField('Ώρες αργίας', default=0)
+    onyχ = models.IntegerField('Ώρες νυχτ.προσαύξησης', default=0)
+    asl3 = models.IntegerField('Ασθένεια < 3', default=0)
+    asm3 = models.IntegerField('Ασθένεια > 3', default=0)
+    apod = models.DecimalField('Αποδοχές')
+    eika = models.DecimalField('Επίδομα ΙΚΑ')
+    pike = models.DecimalField('IKA Εργαζόμενος %')
+    pikt = models.DecimalField('IKA Εργοδότης %')
+    pika = models.DecimalField('IKA %')
+    ike = models.DecimalField('IKA Εργαζόμενου')
+    ike1 = models.DecimalField('IKA Εργαζόμενου επιδόματος ασθένειας')
+    ikt = models.DecimalField('IKA Εργοδότη')
+    fmy = models.DecimalField('Φ.Μ.Υ.')
+    eea = models.DecimalField('E.E.A')
+    pli = models.DecimalField('Πληρωτέο')
+
+    class Meta:
+        unique_together = ("xri", "mon", "mtp", "pro", "apo")
+        table_label = "Μισθοδοσία"
 
 
 class Hmerologio(models.Model):

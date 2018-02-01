@@ -145,7 +145,7 @@ def sql_database_create(models):
     return tsql + 'COMMIT;'
 
 
-def create_tables(dbf, models, print_only=False):
+def create_tables(dbf, models, init_db=None, print_only=False):
     sql = sql_database_create(models)
     # print('Database file: %s' % dbf)
     # print(sql)
@@ -154,6 +154,9 @@ def create_tables(dbf, models, print_only=False):
     try:
         with sqlite3.connect(dbf) as con:
             con.executescript(sql)
+            if init_db and os.path.isfile(init_db):
+                with open(init_db) as file:
+                    con.executescript(file.read())
     except sqlite3.Error as err:
         print(sql)
         return False, '%s\n%s' % (sql, err)

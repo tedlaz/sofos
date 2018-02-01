@@ -66,6 +66,22 @@ class CharNumField(Field):
         return True
 
 
+class TextField(Field):
+    typos = 'TEXT'
+
+    def __init__(self, label, max_length=256, null=False, unique=False,
+                 min_length=0):
+        super().__init__(label, null, unique, qt_widget='text')
+        self.min_length = min_length
+        self.max_length = max_length
+
+    def validate(self, value):
+        lval = len(value)
+        if lval < self.min_length or lval > self.max_length:
+            return False
+        return True
+
+
 class DateField(Field):
     typos = 'DATE'
 
@@ -277,6 +293,13 @@ class Model():
     @classmethod
     def search_by_id(cls, dbf, idv):
         sql = "SELECT * FROM %s WHERE id='%s'" % (cls.__name__, idv)
+        return df.select_one(dbf, sql)
+
+    @classmethod
+    def search_by_id_deep(cls, dbf, idv):
+        data = cls.sql_select_all_deep(dbf)
+        sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
+        print(sql)
         return df.select_one(dbf, sql)
 
     @classmethod

@@ -12,6 +12,8 @@ from sofos import database_functions as cd
 from settings import setup
 import models as md
 qt.CONFIRMATIONS = setup['confirmations']
+BDIR = os.path.dirname(md.__file__)
+INIT_DB_DATA = os.path.join(BDIR, 'init_db.sql')
 
 
 class MainWindow(Qw.QMainWindow):
@@ -54,7 +56,7 @@ class MainWindow(Qw.QMainWindow):
         if filename:
             if not filename.endswith('.%s' % setup['db_suffix']):
                 filename = '%s.%s' % (filename, setup['db_suffix'])
-            success, msg = cd.create_tables(filename, md)
+            success, msg = cd.create_tables(filename, md, INIT_DB_DATA)
             if success:
                 self.update_dbf(filename)
                 Qw.QMessageBox.information(

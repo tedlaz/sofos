@@ -229,6 +229,23 @@ class TTextLine(Qw.QLineEdit):
 
 class TInteger(TTextLine):
     '''Text field with numeric chars only left aligned.'''
+    def __init__(self, val='0', parent=None):
+        super().__init__(val, parent)
+        rval = Qc.QRegExp('(\d*)([1-9])(\d*)')
+        self.setValidator(Qg.QRegExpValidator(rval))
+        self.setAlignment(Qc.Qt.AlignRight)
+
+    def set(self, txt):
+        if txt is not None:
+            ttxt = '%s' % txt
+            self.setText(ttxt.strip())
+        else:
+            self.setText('0')
+        self.setCursorPosition(0)
+
+
+class TIntegerKey(TTextLine):
+    '''Text field with numeric chars only left aligned.'''
     def __init__(self, val='', parent=None):
         super().__init__(val, parent)
         rval = Qc.QRegExp('(\d*)([1-9])(\d*)')
@@ -438,14 +455,14 @@ class TComboDB(Qw.QComboBox):
         2.fill Combo
         3.set current index to initial value
         """
-        vlist = self._model.select_all(self._parent._dbf)
+        vlist = self._model.select_all_deep(self._parent._dbf)
         self.index2id = {}
         self.id2index = {}
         self.addItem('')
         self.index2id[0] = ''
         self.id2index[''] = 0
         for i, elm in enumerate(vlist['rows']):
-            self.addItem('%s' % elm[1])
+            self.addItem(' '.join([str(j) for j in elm[1:]]))
             self.index2id[i+1] = elm[0]
             self.id2index[elm[0]] = i+1
 
@@ -489,7 +506,7 @@ class AutoForm(Qw.QDialog):
         self.widgets['id'] = TInteger(parent=self)
         self.widgets['id'].setVisible(False)
         for i, fld in enumerate(self.model.fields()):
-            self.widgets[fld] = wselector(self.model.field(fld), self)
+            self.widgets[fld] = wselector(self.model.field(fld), fld, self)
             self.fld_layout.insertRow(i, Qw.QLabel(lbs[fld]),
                                       self.widgets[fld])
 
@@ -602,7 +619,7 @@ class AutoFormTable(Qw.QDialog):
         self.tbl.setRowCount(data['rownum'])
         self.tbl.setColumnCount(data['colnum'])
         self.tbl.setHorizontalHeaderLabels(data['labels'])
-        
+
         for i, row in enumerate(data['rows']):
             for j, qt_widget in enumerate(data['qt_widgets_types']):
                 val = row[j]
@@ -719,7 +736,7 @@ class TTextButton(Qw.QWidget):
             self.idv = ''
             self._set_state(0)
             return
-        dicval = self._model.search_by_id(self._dbf, idv)
+        dicval = self._model.search_by_id_deep(self._dbf, idv)
         self._set_state(1 if dicval else 0)
         self.txt_initial = self._rpr(dicval)
         self.rpr = self.txt_initial
@@ -795,13 +812,15 @@ class TTextButton(Qw.QWidget):
         return self.idv
 
 
-def wselector(field, parent):
+def wselector(field, fldname, parent):
+    if fldname == 'id':
+        return TIntegerKey(parent=parent)
     if field.qt_widget == 'int':
         return TInteger(parent=parent)
     elif field.qt_widget == 'text_button':
         return TTextButton(None, field.ftable, parent)
     elif field.qt_widget == 'combo':
-        return TComboDB(None, field.ftable, parent)
+        return TComboDB(field.default, field.ftable, parent)
     elif field.qt_widget == 'check_box':
         return TCheckbox(parent=parent)
     elif field.qt_widget == 'date':

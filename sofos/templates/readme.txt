@@ -18,3 +18,4 @@ pyrcc5 main.qrc -o main_rc.py
 </RCC>
 
 where images is the actual image directory.
+
