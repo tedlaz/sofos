@@ -503,10 +503,10 @@ class AutoForm(Qw.QDialog):
 
     def _create_fields(self):
         lbs = self.model.field_labels()
-        self.widgets['id'] = TInteger(parent=self)
+        self.widgets['id'] = TIntegerKey(parent=self)
         self.widgets['id'].setVisible(False)
         for i, fld in enumerate(self.model.fields()):
-            self.widgets[fld] = wselector(self.model.field(fld), fld, self)
+            self.widgets[fld] = wselector(self.model.field(fld), self)
             self.fld_layout.insertRow(i, Qw.QLabel(lbs[fld]),
                                       self.widgets[fld])
 
@@ -812,9 +812,7 @@ class TTextButton(Qw.QWidget):
         return self.idv
 
 
-def wselector(field, fldname, parent):
-    if fldname == 'id':
-        return TIntegerKey(parent=parent)
+def wselector(field, parent):
     if field.qt_widget == 'int':
         return TInteger(parent=parent)
     elif field.qt_widget == 'text_button':

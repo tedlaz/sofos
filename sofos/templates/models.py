@@ -264,7 +264,7 @@ class Account(models.Model):
 
 class Trans(models.Model):
     imer = models.ForeignKey(Hmerologio, 'Ημερολόγιο', qt_widget='combo',
-                             default=1)
+                             default=2)
     trdate = models.DateField('Ημ/νία εγγραφής')
     parko = models.CharField('Παραστατικό', max_length=20)
     per = models.CharField('Περιγραφή', max_length=50)
