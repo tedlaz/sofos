@@ -8,7 +8,9 @@ TEN = "abgdezh8iklmn3oprstyfx4wABGDEZH8IKLMN3OPRSTYFX4WsaehiiioyyywAEHIIOYYW"
 
 def isNum(val):  # is val number or not
     """Check if val is number or not
+
     :param val: value to check
+
     :return: True if val is number else False
     """
     try:
@@ -23,8 +25,10 @@ def isNum(val):  # is val number or not
 
 def dec(poso=0, decimals=2):
     """Returns a decimal. If poso is not a number or None returns dec(0)
+
     :param poso: the number to transofrm to decimal
     :param decimals: Number of decimals
+
     :return: A decimal number with specific number of decimal digits
     """
     poso = 0 if (poso is None) else poso
@@ -35,9 +39,12 @@ def dec(poso=0, decimals=2):
 
 def triades(txt, separator='.'):
     """Help function to split digits to thousants (123456 becomes 123.456)
+
     :param txt: text to split
     :param separator: The separator to use
+
     :return: txt separated by separator in group of three
+
     Example::
 
         >>> import gr
@@ -51,10 +58,13 @@ def triades(txt, separator='.'):
 
 def dec2gr(poso, decimals=2, zero_as_space=False):
     """Returns string formatted as Greek decimal (1234,56 becomes 1.234,56)
+
     :param poso: number to format
     :param decimals: Number of decimal digits
-    :zero_as_space: if True then zero values become one space
+    :param zero_as_space: if True then zero values become one space
+
     :return: Greek formatted number
+
     Example::
 
         >>> import gr
@@ -87,8 +97,10 @@ def dec2gr(poso, decimals=2, zero_as_space=False):
 
 def gr2dec(poso, decimals=2):
     """Returns decimal (12.345,67 becomes 12345.67)
+
     :param poso: text Greek formatted number
     :param decimals: decimal digits
+
     :return: Decimal number
     """
     st = poso.replace('.', '')
@@ -118,7 +130,14 @@ def grup(txtval):
 
 
 def cap_first_letter(txt):
-    """Capitalize first letter"""
+    """Capitalize first letter.
+
+    Example::
+
+        >>> import gr
+        >>> gr.cap_first_letter('abcd')
+        'Abcd'
+    """
     lejeis = txt.split()
     ftxt = []
     for leji in lejeis:
@@ -127,7 +146,11 @@ def cap_first_letter(txt):
 
 
 def gr2en(txt, space=' '):
-    """Greek to Greeglish"""
+    """Greek to Greeglish
+
+    :param txt: Text to translate to Greeglish
+    :param space: If space == '' then capitalize txt
+    """
     gdic = dict(zip(TGR, TEN))
     gdic[' '] = space
     found = False
@@ -146,7 +169,13 @@ def gr2en(txt, space=' '):
 
 
 def rename_file(fname, no_space=True):
-    """Rename a file"""
+    """Rename a file
+
+    :param fname: file to rename
+    :param no_space: remove spaces from filename
+
+    :return: A filename in greekglish
+    """
     if no_space:
         space = ''
     else:
@@ -163,7 +192,9 @@ def rename_file(fname, no_space=True):
 
 def is_iso_date(strdate):
     """Check if strdate is isodate (yyyy-mm-dd)
+
     :param strdate: normally an iso formatted (yyyy-mm-dd) string
+
     :return: True if iso_date False else
     """
     if strdate is None:
@@ -193,20 +224,18 @@ def date2gr(date, no_trailing_zeros=False):
     """Create Greek Date
 
     :param date: iso date 'yyyy-mm-dd'
-    :type date: iso_date
-    :param no_trailing_zeros: Month, Day without trailing zeros (If True
-        '2017-01-09' returns '9/1/2017'.If False '2017-01-09' returns
-        '09/01/2017')
+    :param date: iso_date
+    :param no_trailing_zeros: Month, Day without trailing zeros
 
     :return: 'dd/mm/yyyy'
 
     Example::
 
         >>> import dategr
-        >>> dategr.date2gr('2017-01-15)
-        '15/01/2017'
+        >>> dategr.date2gr('2017-01-05)
+        '05/01/2017'
         >>> dategr.dat2gr('2017-01-15, no_trailing_zeros=True)
-        '15/1/2017'
+        '5/1/2017'
     """
     assert is_iso_date(date)
 
