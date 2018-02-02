@@ -350,7 +350,6 @@ class Model():
         """
         data = cls.sql_select_all_deep(dbf)
         sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
-        print(sql)
         return df.select_one(dbf, sql)
 
     @classmethod

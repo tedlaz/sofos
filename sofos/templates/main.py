@@ -73,9 +73,9 @@ class MainWindow(Qw.QMainWindow):
     def update_dbf(self, dbf):
         if not cd.check_database_against_models(dbf, md):
             Qw.QMessageBox.critical(
-            self,
-            "Πρόβλημα",
-            "Η βάση δεδομένων %s δεν είναι συμβατή" % dbf)
+                self,
+                "Πρόβλημα",
+                "Η βάση δεδομένων %s δεν είναι συμβατή" % dbf)
             self.dbf = ''
             self.tablemenu.setEnabled(False)
         else:

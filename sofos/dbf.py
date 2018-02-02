@@ -15,7 +15,7 @@ def cud(dbf, sql):
     """Safely save (insert or update) data to database
 
     :param dbf: Database file
-    :parma sql: select sql
+    :param sql: select sql
     :return: True is operation successful, else False
     """
     try:
@@ -38,7 +38,7 @@ def select_one(dbf, sql):
     """Run a select against dbf and get one dictionary or None
 
     :param dbf: Database file
-    :parma sql: select sql
+    :param sql: select sql
     :return: dictionary
 
     Return format::
