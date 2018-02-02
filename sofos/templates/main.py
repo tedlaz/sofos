@@ -8,7 +8,7 @@ import PyQt5.QtWidgets as Qw
 import main_rc
 from sofos import qt
 from sofos import models as sofosmd
-from sofos import database_functions as cd
+from sofos import dbf as cd
 from settings import setup
 import models as md
 qt.CONFIRMATIONS = setup['confirmations']

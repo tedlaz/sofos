@@ -2,13 +2,15 @@
 Main models library
 """
 from . import gr
-from . import database_functions as df
+from . import dbf as df
 IGNORE = 'models'  # For final models file
 QTW = ['int', 'text_button', 'combo', 'check_box', 'date', 'date_or_empty',
        'num', 'text_num', 'text', 'week_days', 'str']
 
 
 class Field():
+    """This is the base class of all field classes
+    """
     typos = ''
 
     def __init__(self, label='', null=False, unique=False, default=None,
@@ -20,6 +22,10 @@ class Field():
         self.qt_widget = qt_widget
 
     def sql(self, field):
+        """sql create for field
+        :param field: field name
+        :return: sql
+        """
         typ = self.typos
         null = '' if self.null else 'NOT NULL'
         unique = 'UNIQUE' if self.unique else ''
@@ -31,10 +37,12 @@ class Field():
         return tsq
 
     def validate(self, value):
+        """To be implemented by every child class"""
         return False
 
 
 class CharField(Field):
+    """char field """
     typos = 'TEXT'
 
     def __init__(self, label, max_length, null=False, unique=False,
@@ -51,6 +59,7 @@ class CharField(Field):
 
 
 class CharNumField(Field):
+    """Strings that take numeric values only (tax numbers, phones , etc)"""
     typos = 'TEXT'
 
     def __init__(self, label, max_length, null=False, unique=False,
@@ -67,6 +76,7 @@ class CharNumField(Field):
 
 
 class TextField(Field):
+    """Long text fields"""
     typos = 'TEXT'
 
     def __init__(self, label, max_length=256, null=False, unique=False,
@@ -83,6 +93,7 @@ class TextField(Field):
 
 
 class DateField(Field):
+    """Date fields"""
     typos = 'DATE'
 
     def __init__(self, label, max_length=10, null=False, unique=False,
@@ -101,6 +112,7 @@ class DateField(Field):
 
 
 class DateEmptyField(Field):
+    """Date or empty fields"""
     typos = 'DATETIME'
 
     def __init__(self, label, max_length=10, null=False, unique=False,
@@ -117,6 +129,7 @@ class DateEmptyField(Field):
 
 
 class IntegerField(Field):
+    """Integer fields"""
     typos = 'INTEGER'
 
     def __init__(self, label='', null=False, unique=False, default=0):
@@ -127,6 +140,7 @@ class IntegerField(Field):
 
 
 class DecimalField(Field):
+    """Decimal fields"""
     typos = 'DECIMAL'
 
     def __init__(self, label='', null=False, unique=False, default=0):
@@ -137,6 +151,7 @@ class DecimalField(Field):
 
 
 class WeekdaysField(Field):
+    """Weekdays special fields"""
     typos = 'TEXT'
 
     def __init__(self, label, max_length=30, null=False, unique=False,
@@ -153,6 +168,7 @@ class WeekdaysField(Field):
 
 
 class ForeignKey(Field):
+    """Foreign key fields"""
     typos = 'INTEGER'
 
     def __init__(self, ftable, label, qt_widget='text_button',
@@ -172,14 +188,18 @@ class ForeignKey(Field):
 
 
 class Model():
+    """This class represents table. Most of the time it is used as meta class
+    """
     def __init__(self, dbf):
         self.dbf = dbf
         self.id = ''
 
     def set(self, **kwargs):
+        """set"""
         self.set_from_dict(kwargs)
 
     def set_from_dict(self, adict):
+        """set from dictionary"""
         fields = self.fields()
         for key, value in adict.items():
             if key in fields or key == 'id':
@@ -189,12 +209,14 @@ class Model():
                 raise ValueError
 
     def load(self, idv):
+        """fill model with data from database"""
         sql = self.sql_select_by_id(idv)
         row_from_db = df.select_one(self.dbf, sql)
         if row_from_db:
             self.set_from_dict(row_from_db)
 
     def get_dict(self, with_id=False):
+        """Get data from model in dictionary format"""
         if with_id:
             adic = {'id': self.id}
         else:
@@ -204,6 +226,7 @@ class Model():
         return adic
 
     def validate(self):
+        """Validate data"""
         errs = []
         ers = 'elm length is %s out of(%s, %s)'
         for elm in self.fields():
@@ -221,6 +244,7 @@ class Model():
             return False, errs
 
     def sql_save(self):
+        """create sql to save data to database"""
         validated, msg = self.validate()
         if not validated:
             return msg
@@ -236,6 +260,7 @@ class Model():
             return sqt % (self.table_name(), sts, self.id)
 
     def save(self):
+        """Save data to database"""
         sql = self.sql_save()
         saved, lastid = df.cud(self.dbf, sql)
         if saved:
@@ -244,7 +269,9 @@ class Model():
 
     @classmethod
     def save_meta(cls, dbf, dva):
-        """dva : dictionary of values"""
+        """
+        :param dbf: Database file
+        :param dva: dictionary of values"""
         if dva['id'] is None or dva['id'] == '':
             sqt = 'INSERT INTO %s(%s) VALUES(%s);'
             flds = ', '.join([i for i in dva.keys() if i != 'id'])
@@ -258,10 +285,16 @@ class Model():
 
     @classmethod
     def field(cls, field_name):
+        """Get field object from field_name
+        :param field_name: Field name
+        """
         return getattr(cls, field_name)
 
     @classmethod
     def field_labels(cls):
+        """Get a dictionary of field labels
+        :return: dictionary of the form: {'fld_name': fld_label, ...}
+        """
         fields = cls.fields()
         field_labels_dic = {'id': 'Νο'}
         for field in fields:
@@ -271,10 +304,12 @@ class Model():
 
     @classmethod
     def fields(cls):
+        """Get a list of field names"""
         return [i for i in cls.__dict__.keys() if i[:1] != '_' and i != 'Meta']
 
     @classmethod
     def sql_create(cls):
+        """get sql for Table creation"""
         _sq = "CREATE TABLE IF NOT EXISTS %s(\n" % cls.table_name()
         _sq += "id INTEGER PRIMARY KEY,\n"
         sq_ = "\n);\n\n"
@@ -288,15 +323,31 @@ class Model():
 
     @classmethod
     def sql_select(cls):
+        """Select sql
+        :return: sql for simple table selection
+        """
         return 'SELECT * FROM %s' % cls.__name__.lower()
 
     @classmethod
     def search_by_id(cls, dbf, idv):
+        """Search for a specific record by id
+
+        :param dbf: Database file
+        :param idv: the id to find
+        :return: a dictionary with data or None (if not found)
+        """
         sql = "SELECT * FROM %s WHERE id='%s'" % (cls.__name__, idv)
         return df.select_one(dbf, sql)
 
     @classmethod
     def search_by_id_deep(cls, dbf, idv):
+        """Search for a specific record by id deep. Deep means that it returns
+           every data from every parent table it finds.
+
+        :param dbf: Database file
+        :param idv: the id to find
+        :return: a dictionary with data or None (if not found)
+        """
         data = cls.sql_select_all_deep(dbf)
         sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
         print(sql)
@@ -304,6 +355,7 @@ class Model():
 
     @classmethod
     def table_label(cls):
+        """Get table label"""
         if 'Meta' in cls.__dict__.keys():
             meta = getattr(cls, 'Meta')
             if hasattr(meta, 'table_label'):
@@ -312,7 +364,7 @@ class Model():
 
     @classmethod
     def unique_together(cls):
-        '''unique_together is a Meta attribute to create sql unique values'''
+        """unique_together is a Meta attribute to create sql unique values"""
         if 'Meta' in cls.__dict__.keys():
             meta = getattr(cls, 'Meta')
             if hasattr(meta, 'unique_together'):
@@ -321,17 +373,25 @@ class Model():
 
     @classmethod
     def table_name(cls):
+        """Get table name"""
         return cls.__name__.lower()
 
     @classmethod
     def select_all(cls, dbf):
+        """Select all(To be corrected)"""
         sql = 'SELECT * FROM %s' % cls.__name__.lower()
         return df.select_cols_rows(dbf, sql)
 
     @classmethod
     def sql_select_all_deep(cls, dbf, field_list=None, label_list=None,
                             qt_widget_list=None, joins=None):
-        """Returns sql with all relations of table"""
+        """Returns sql with all relations of table
+        :param dbf: Database file
+        :param field_list: A list of fields (for recursion)
+        :param label_list: A list of labels (for recursion)
+        :param qt_widget_list: A list of qt_widgets (for recursion)
+        :param joins: A list of joins (for recursion)
+        """
         table_name = cls.__name__.lower()
         sqt = "SELECT %s\nFROM %s\n%s"
         flds = cls.fields()
@@ -379,6 +439,7 @@ class Model():
 
     @classmethod
     def select_all_deep(cls, dbf):
+        """Deep select all"""
         data = cls.sql_select_all_deep(dbf)
         rows = df.select_rows(dbf, data['sql'])
         data['rows'] = rows
@@ -405,7 +466,7 @@ class Model():
 
     @classmethod
     def search_deep(cls, dbf, search_string):
-        """Find deep"""
+        """Deep search"""
         search_list = search_string.split()
         meta = cls.sql_select_all_deep(dbf)
         search_field = " || ' ' || ".join(meta['cols'])

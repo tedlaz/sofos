@@ -1,8 +1,8 @@
-"""Library to acces database"""
+"""Library with database functions"""
 import os.path
 import sqlite3
-from . import gr
 import hashlib
+from . import gr
 IGNORE = 'models'
 DELETE, INSERT, UPDATE = range(3)
 
@@ -12,7 +12,12 @@ class ValidateException(Exception):
 
 
 def cud(dbf, sql):
-    """Safely save data to database"""
+    """Safely save (insert or update) data to database
+
+    :param dbf: Database file
+    :parma sql: select sql
+    :return: True is operation successful, else False
+    """
     try:
         con = sqlite3.connect(dbf)
         cur = con.cursor()
@@ -30,12 +35,18 @@ def cud(dbf, sql):
 
 
 def select_one(dbf, sql):
-    """Run a select
-        returns one dict {'id': 1, 'v1': ...}
+    """Run a select against dbf and get one dictionary or None
+
+    :param dbf: Database file
+    :parma sql: select sql
+    :return: dictionary
+
+    Return format::
+
+        {'id': 1, 'key1': val1, 'key2': val2, ...}
     """
     with sqlite3.connect(dbf) as con:
         cur = con.cursor()
-        # con.row_factory = sqlite3.Row
         con.create_function("grup", 1, gr.grup)
         try:
             cur.execute(sql)
@@ -46,8 +57,15 @@ def select_one(dbf, sql):
 
 
 def select_list_of_dicts(dbf, sql):
-    """Run a select
-        returns [{'id': 1, 'v1': ...}, {'id': 2, 'v1':....}]
+    """Run a select agains dbf and get a list of dictionaries
+
+    :param dbf: Database file
+    :param sql: select sql
+    :return: list of dictionaries
+
+    Return format::
+
+        [{'id': 1, 'k1': v1, ...}, {'id': 2, 'k1': v1, ...}]
     """
     with sqlite3.connect(dbf) as con:
         cur = con.cursor()
@@ -65,8 +83,18 @@ def select_list_of_dicts(dbf, sql):
 
 
 def select_cols_rows(dbf, sql):
-    """Run a select
-        returns {'cols': [c1, c2,..], 'rows': [[1, v1, ..], [2, v1, ..], ...]}
+    """Run a select against dbf and get a dictionary
+
+    :param dbf: Database file
+    :param sql: select sql
+    :return: dictionary
+
+    Return Dictionary format::
+
+        {'cols': [c1, c2,..],
+         'rows': [[1, v1, ..], [2, v1, ..], ...],
+         'rownum': 34,
+         'colnum': 4}
     """
     with sqlite3.connect(dbf) as con:
         cur = con.cursor()
@@ -82,8 +110,15 @@ def select_cols_rows(dbf, sql):
 
 
 def select_rows(dbf, sql):
-    """Run a select
-        returns [[1, v1, ..], [2, v1, ..], ...]
+    """Run a select against dbf
+
+    :param dbf: Database file
+    :param sql: select sql
+    :return: list of tuples of values
+
+    Return format::
+
+        ([(1, v11, ..), (2, v12, ..), ..., (n, v1n, ..)])
     """
     rows = []
     with sqlite3.connect(dbf) as con:
@@ -98,7 +133,11 @@ def select_rows(dbf, sql):
 
 
 def calc_md5(models):
-    """models: models.py from our project folder """
+    """Calculates the md5 of the models schema
+
+    :param models: normally models.py from your project folder
+    :return: md5 value
+    """
     tables = [cls for cls in dir(models) if (cls[0] != '_' and cls != IGNORE)]
     tdic = {}
     for cls in tables:
@@ -115,6 +154,11 @@ def calc_md5(models):
 
 
 def create_z_table(models):
+    """Create a metadata keys/values table and insert at least the md5 of the
+       models schema.
+
+    :param models: normally models.py from your project folder
+    """
     md5 = calc_md5(models)
     sql = ("CREATE TABLE IF NOT EXISTS z ("
            "key TEXT NOT NULL PRIMARY KEY, "
@@ -124,6 +168,13 @@ def create_z_table(models):
 
 
 def check_database_against_models(dbf, models):
+    """This function checks the databases creation md5 against current models
+    md5 in order to evaluate if the two schemas are the same
+
+    :param dbf: Database file
+    :param models: normally models.py from your project folder
+    :return: True if database schema is the same with model schema
+    """
     md5_from_models = calc_md5(models)
     sql = "SELECT val FROM z WHERE key='md5'"
     try:
@@ -135,7 +186,11 @@ def check_database_against_models(dbf, models):
 
 
 def sql_database_create(models):
-    """models: models.py from our project folder """
+    """Create sql for table creation according to your model settings
+
+    :param models: normally models.py from your project folder
+    :return: create sql
+    """
     classes = [cls for cls in dir(models) if (cls[0] != '_' and cls != IGNORE)]
     tsql = 'BEGIN TRANSACTION;\n\n'
     for cls in classes:
@@ -146,11 +201,17 @@ def sql_database_create(models):
 
 
 def create_tables(dbf, models, init_db=None, print_only=False):
+    """Create tables from model definitions
+
+    :param dbf: Database filename
+    :param models: The models module to use (Normally models.py in your
+        application's root)
+    :param init_db: The init_db.sql file to use if present
+    :param print_only: If True does nothing, just returns sql
+    """
     sql = sql_database_create(models)
-    # print('Database file: %s' % dbf)
-    # print(sql)
     if print_only:
-        return True
+        return sql
     try:
         with sqlite3.connect(dbf) as con:
             con.executescript(sql)
@@ -159,13 +220,14 @@ def create_tables(dbf, models, init_db=None, print_only=False):
                     con.executescript(file.read())
     except sqlite3.Error as err:
         print(sql)
-        return False, '%s\n%s' % (sql, err)
+        return False, str(err)
     except Exception as err:
         return False, err
     return True, 'Database file %s created !!' % dbf
 
 
-def insel(lin):
+def _insel(lin):
+    """For use in backup_database"""
     SEL = ('INSERT INTO', 'BEGIN', 'COMMIT')
     for elm in SEL:
         if lin.startswith(elm):
@@ -173,10 +235,20 @@ def insel(lin):
     return False
 
 
-def backup_database(dbf, filename):
+def backup_database(dbf, filename, inserts_only=True):
+    """Backup database
+
+    :param dbf: Database file to backup
+    :param filename: backup destination filename
+    :param inserts_only: If True backup data only, if False backup everything
+    :return: True if backup was successful
+    """
     try:
         with sqlite3.connect(dbf) as con:
-            data = '\n'.join([i for i in con.iterdump() if insel(i)])
+            if inserts_only:
+                data = '\n'.join([i for i in con.iterdump() if _insel(i)])
+            else:
+                data = '\n'.join(con.iterdump())
     except sqlite3.Error as err:
         return False, '%s\n' % err
     except Exception as err:
