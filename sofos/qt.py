@@ -1,7 +1,5 @@
 '''
-qted module
-===========
-pyqt controls τροποποιημένα να έχουν ομοιόμορφο τρόπο κλήσης
+pyqt controls
 '''
 import datetime
 import decimal
