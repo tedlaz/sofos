@@ -386,6 +386,7 @@ class Model():
     def sql_select_all_deep(cls, dbf, field_list=None, label_list=None,
                             qt_widget_list=None, joins=None):
         """Returns sql with all relations of table
+
         :param dbf: Database file
         :param field_list: A list of fields (for recursion)
         :param label_list: A list of labels (for recursion)
@@ -466,7 +467,11 @@ class Model():
 
     @classmethod
     def search_deep(cls, dbf, search_string):
-        """Deep search"""
+        """Deep search
+
+        :param dbf: Database file
+        :param search_string: search string
+        """
         search_list = search_string.split()
         meta = cls.sql_select_all_deep(dbf)
         search_field = " || ' ' || ".join(meta['cols'])
@@ -485,10 +490,17 @@ class Model():
 
 
 def model_tables(models):
-    """models: models.py from our project folder """
+    """models: models.py from our project folder
+
+    :return: Dictionary
+
+    return dictionary format::
+
+        {table_name1: table_object1, ...}
+    """
     tables = [cls for cls in dir(models) if (cls[0] != '_' and cls != IGNORE)]
     table_dict = {}
     for cls in tables:
         aaa = getattr(models, cls)
-        table_dict[aaa.table_name()] = aaa
+        table_dict[aaa.table_name()] = getattr(models, cls)
     return table_dict

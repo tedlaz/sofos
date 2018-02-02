@@ -10,7 +10,9 @@ Welcome to sofos's documentation!
    :maxdepth: 4
    :caption: Contents:
 
+   tutorial
    sofos
+
 
 
 Indices and tables

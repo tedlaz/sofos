@@ -19,8 +19,20 @@
 #
 import os
 import sys
+# from unittest.mock import MagicMock
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.append(os.path.dirname(__file__))
+
+
+# class Mock(MagicMock):
+#     @classmethod
+#     def __getattr__(cls, name):
+#             return MagicMock()
+
+
+# MOCK_MODULES = ['pygtk', 'PyQt5']
+# sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 # -- General configuration ------------------------------------------------
 
@@ -149,7 +161,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'sofos.tex', 'sofos Documentation',
-     'Author', 'manual'),
+     'Ted Lazaros', 'manual'),
 ]
 
 
@@ -195,5 +207,3 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
-
