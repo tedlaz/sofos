@@ -1,5 +1,5 @@
 .. sofos documentation master file, created by
-   sphinx-quickstart on Fri Feb  2 13:17:53 2018.
+   sphinx-quickstart on Fri Feb  2 16:32:14 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -7,7 +7,7 @@ Welcome to sofos's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Contents:
 
    sofos
