@@ -5,7 +5,6 @@ python:
 cache: pip
 install: "pip install -r requirements.txt"
 before_script:
-  - export XVFBARGS="-screen 0 1280x1024x24"
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - sleep 5
