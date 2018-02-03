@@ -1,20 +1,24 @@
 """Module test_dategr"""
 import unittest
-import sys
 from PyQt5.QtTest import QTest
 import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
 import PyQt5.QtWidgets as Qw
 from sofos import qt
 
-app = Qw.QApplication(sys.argv)
-
 
 class Tests(unittest.TestCase):
 
     def setUp(self):
+        super(Tests, self).setUp()
+        self.app = Qw.QApplication([])
         self.chkbox = qt.TCheckbox()
         self.date = qt.TDate()
+
+    def tearDown(self):
+        """Deletes the reference owned by self"""
+        del self.app
+        super(Tests, self).tearDown()
 
     def test_TCheckbox_01(self):
         self.assertEqual(self.chkbox.get(), 0)
