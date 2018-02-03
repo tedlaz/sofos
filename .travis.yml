@@ -1,11 +1,13 @@
 language: python
-sudo: required
+sudo: false
 python:
   - "3.6"
 install:
-  - "pip install -r requirements.txt"
+  - pip install -r requirements.txt
+  - pip install coveralls
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - sleep 5
-script: python -m unittest -v
+script: coverage run -m unittest
+after_success: coveralls
