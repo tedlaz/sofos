@@ -10,4 +10,4 @@ before_script:
   - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render"
 install:
   - "pip install PyQt5"
-script: cd sofos && python -m unittest
+script: python -m unittest
