@@ -57,7 +57,7 @@ def triades(txt, separator='.'):
 
 
 def dec2gr(poso, decimals=2, zero_as_space=False):
-    """Returns string formatted as Greek decimal (1234,56 becomes 1.234,56)
+    """Returns string formatted as Greek decimal (1234.56 becomes 1.234,56)
 
     :param poso: number to format
     :param decimals: Number of decimal digits
@@ -153,7 +153,6 @@ def gr2en(txt, space=' '):
     """
     gdic = dict(zip(TGR, TEN))
     gdic[' '] = space
-    found = False
     if space == '':
         tmp = cap_first_letter(txt)
     else:
@@ -161,11 +160,10 @@ def gr2en(txt, space=' '):
     ftxt = ''
     for char in tmp:
         if char in gdic:
-            found = True
-        ftxt += gdic.get(char, char)
-    if found:
-        return ftxt
-    return None
+            ftxt += gdic.get(char, char)
+        else:
+            ftxt += char
+    return ftxt
 
 
 def rename_file(fname, no_space=True):
