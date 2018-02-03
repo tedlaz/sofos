@@ -21,13 +21,14 @@ where images is the actual image directory.
 
 Basic .travis.yml file:
 language: python
+cache: pip
 python:
   - "3.6"
-cache: pip
-install: "pip install -r requirements.txt"
-before_script:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3
-script: python -m unittest
-- "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x24"
+install:
+  - pip install -q pyqt5==5.9.2  **** Be carefull version 5.10 gives segmentation faults
+  - pip install coveralls
+  - pip install codecov
+script: xvfb-run coverage run -m unittest
+after_success:
+  - coveralls
+  - codecov

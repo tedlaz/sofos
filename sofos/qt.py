@@ -95,9 +95,8 @@ class TDateEmpty(Qw.QToolButton):
         self.menu().hide()
 
     def set(self, iso_date):
-        if not iso_date:
-            return
-        if len(iso_date) == 0:
+        self.setText('')
+        if not iso_date or len(iso_date) == 0:
             return
         yyy, mmm, ddd = iso_date.split('-')
         self.setText('%s/%s/%s' % (ddd, mmm, yyy))

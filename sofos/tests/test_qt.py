@@ -12,8 +12,6 @@ class Tests(unittest.TestCase):
     def setUp(self):
         super(Tests, self).setUp()
         self.app = Qw.QApplication([])
-        self.chkbox = qt.TCheckbox()
-        self.date = qt.TDate()
 
     def tearDown(self):
         """Deletes the reference owned by self"""
@@ -21,12 +19,31 @@ class Tests(unittest.TestCase):
         super(Tests, self).tearDown()
 
     def test_TCheckbox_01(self):
-        self.assertEqual(self.chkbox.get(), 0)
+        chkbox = qt.TCheckbox()
+        self.assertEqual(chkbox.get(), 0)
 
     def test_TCheckbox_02(self):
-        self.chkbox.set(1)
-        self.assertEqual(self.chkbox.get(), 2)
+        chkbox = qt.TCheckbox()
+        chkbox.set(1)
+        self.assertEqual(chkbox.get(), 2)
 
     def test_TDate_01(self):
-        self.date.set('2017-01-13')
-        self.assertEqual(self.date.get(), '2017-01-13')
+        date = qt.TDate()
+        date.set('2017-01-13')
+        self.assertEqual(date.get(), '2017-01-13')
+
+    def test_TDateEmpty_01(self):
+        dempty = qt.TDateEmpty()
+        self.assertEqual(dempty.get(), '')
+
+    def test_TNumeric_01(self):
+        qnu = qt.TNumeric()
+        self.assertEqual(str(qnu.get()), '0.00')
+
+    def test_TNumeric_02(self):
+        qnu = qt.TNumeric(12.34)
+        self.assertEqual(str(qnu.get()), '12.34')
+
+    def test_TNumeric_03(self):
+        qnu = qt.TNumeric(None)
+        self.assertEqual(str(qnu.get()), '0.00')
