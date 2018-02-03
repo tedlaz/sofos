@@ -3,8 +3,6 @@ sudo: required
 dist: trusty
 python:
   - "3.6"
-cache:
-  - pip
 before_script:
   - "sudo apt-get update"
   - "export DISPLAY=:99.0"
