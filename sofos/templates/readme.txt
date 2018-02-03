@@ -19,3 +19,10 @@ pyrcc5 main.qrc -o main_rc.py
 
 where images is the actual image directory.
 
+Basic .travis.yml file:
+language: python
+python:
+  - "3.6"
+cache: pip
+install: "pip install -r requirements.txt"
+script: python -m unittest
