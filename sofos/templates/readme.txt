@@ -30,3 +30,4 @@ before_script:
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3
 script: python -m unittest
+- "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x24"
