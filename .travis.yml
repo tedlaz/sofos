@@ -3,7 +3,8 @@ cache: pip
 python:
   - "3.6"
 install:
-  - pip install -r requirements.txt
+  - pip uninstall -q -y pytest-xvfb
+  - pip install -q pyqt5==5.9.2
   - pip install coveralls
   - pip install codecov
 script: xvfb-run coverage run -m unittest
