@@ -89,6 +89,18 @@ class Tests(unittest.TestCase):
     def test_gr2dec_03(self):
         self.assertEqual(gr.gr2dec('-123,452'), gr.dec('-123.45'))
 
+    def test_is_integer_01(self):
+        self.assertEqual(gr.is_integer(12), True)
+        self.assertEqual(gr.is_integer('12'), True)
+        self.assertEqual(gr.is_integer('12a'), False)
+        self.assertEqual(gr.is_integer('-12'), True)
+        self.assertEqual(gr.is_integer(-12), True)
+        self.assertEqual(gr.is_integer(12.01), False)
+        self.assertEqual(gr.is_integer('12.01'), False)
+        self.assertEqual(gr.is_integer('0'), True)
+        self.assertEqual(gr.is_integer(0), True)
+        self.assertEqual(gr.is_integer(''), False)
+
     def test_is_positive_integer_01(self):
         self.assertEqual(gr.is_positive_integer(12), True)
 
@@ -179,3 +191,11 @@ class Tests(unittest.TestCase):
     def test_date2gr_03(self):
         self.assertEqual(gr.date2gr('2017-02-01', no_trailing_zeros=True),
                          '1/2/2017')
+
+    def test_is_weekdays_01(self):
+        self.assertFalse(gr.is_weekdays(''))
+        self.assertFalse(gr.is_weekdays('[1, 2]'))
+        self.assertFalse(gr.is_weekdays([1, 1]))
+        self.assertFalse(gr.is_weekdays([1, 1, 1, 1, 1, 1]))
+        self.assertTrue(gr.is_weekdays('[1, 1, 1, 1, 1, 1, 1]'))
+        self.assertTrue(gr.is_weekdays([1, 1, 1, 1, 1, 1, 1]))

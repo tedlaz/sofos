@@ -53,9 +53,7 @@ class TDate(Qw.QDateEdit):
         self.setLocale(GRLOCALE)
 
     def set(self, iso_date):
-        if iso_date:
-            if len(iso_date) > 10:
-                iso_date = iso_date[:10]
+        if gr.is_iso_date(iso_date):
             yyy, mmm, ddd = iso_date.split('-')
             qdate = Qc.QDate()
             qdate.setDate(int(yyy), int(mmm), int(ddd))
@@ -96,7 +94,7 @@ class TDateEmpty(Qw.QToolButton):
 
     def set(self, iso_date):
         self.setText('')
-        if not iso_date or len(iso_date) == 0:
+        if not gr.is_iso_date(iso_date) or len(iso_date) == 0:
             return
         yyy, mmm, ddd = iso_date.split('-')
         self.setText('%s/%s/%s' % (ddd, mmm, yyy))
@@ -161,9 +159,7 @@ class TNumericSpin(Qw.QDoubleSpinBox):
     '''Numeric (decimal 2 ) values (eg 999,99)'''
     def __init__(self, val=0, parent=None):
         super().__init__(parent)
-
         self.set(val)
-
         self.setMinimum(-99999999999)
         self.setMaximum(99999999999)
         self.setAlignment(Qc.Qt.AlignRight |
@@ -213,35 +209,16 @@ class TTextLine(Qw.QLineEdit):
 
     def set(self, txt):
         if txt is not None:
-            ttxt = '%s' % txt
-            self.setText(ttxt.strip())
+            self.setText(str(txt).strip())
         else:
             self.setText('')
         self.setCursorPosition(0)
 
     def get(self):
-        tmp = '%s' % self.text()
-        return tmp.strip()
+        return str(self.text()).strip()
 
 
 class TInteger(TTextLine):
-    '''Text field with numeric chars only left aligned.'''
-    def __init__(self, val='0', parent=None):
-        super().__init__(val, parent)
-        rval = Qc.QRegExp('(\d*)([1-9])(\d*)')
-        self.setValidator(Qg.QRegExpValidator(rval))
-        self.setAlignment(Qc.Qt.AlignRight)
-
-    def set(self, txt):
-        if txt is not None:
-            ttxt = '%s' % txt
-            self.setText(ttxt.strip())
-        else:
-            self.setText('0')
-        self.setCursorPosition(0)
-
-
-class TIntegerKey(TTextLine):
     '''Text field with numeric chars only left aligned.'''
     def __init__(self, val='', parent=None):
         super().__init__(val, parent)
@@ -250,11 +227,21 @@ class TIntegerKey(TTextLine):
         self.setAlignment(Qc.Qt.AlignRight)
 
     def set(self, txt):
-        if txt is not None:
-            ttxt = '%s' % txt
-            self.setText(ttxt.strip())
+        if txt is None or txt == '':
+            self.setText('0')
         else:
+            self.setText(str(txt).strip())
+        self.setCursorPosition(0)
+
+
+class TIntegerKey(TInteger):
+    '''Text field with numeric chars only left aligned.'''
+
+    def set(self, txt):
+        if txt is None or txt == '':
             self.setText('')
+        else:
+            self.setText(str(txt).strip())
         self.setCursorPosition(0)
 
 
@@ -267,8 +254,7 @@ class TTextlineNum(TTextLine):
 
     def set(self, txt):
         if txt is not None:
-            ttxt = '%s' % txt
-            self.setText(ttxt.strip())
+            self.setText(str(txt).strip())
         else:
             self.setText('')
         self.setCursorPosition(0)
@@ -286,6 +272,8 @@ class TYesNoCombo(Qw.QComboBox):
         return self.currentIndex() != 0
 
     def set(self, val):
+        if not val:
+            val = 0
         idx = 0
         if int(val) != 0:
             idx = 1
@@ -372,20 +360,17 @@ class TWeekdays(Qw.QWidget):
 
     def get(self, strVal=True):
         if strVal:
-            st = '['
-            for i in range(7):
-                if i == 6:
-                    st += '%s]' % self.grid[i]
-                else:
-                    st += '%s,' % self.grid[i]
-            return st
+            return str(self.grid)
         else:
             return self.grid
 
-    def set(self, darr=[0, 0, 0, 0, 0, 0, 0]):
+    def set(self, darray=None):
         # Set values to days vector. But first checks for
         # proper array length and type
-        darr = '%s' % darr
+        if darray is None or darray == '':
+            darr = '[0, 0, 0, 0, 0, 0, 0]'
+        else:
+            darr = str(darray)
         tmparr = eval(darr)
         if len(tmparr) == 7:
             self.grid = tmparr
@@ -415,6 +400,8 @@ class TCombo(Qw.QComboBox):
     def set(self, id_):
         if id_:
             self.setCurrentIndex(self.id2index[id_])
+        else:
+            self.setCurrentIndex(0)
 
     def populate(self, vlist):
         """

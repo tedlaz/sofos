@@ -1,0 +1,93 @@
+"""Module test_dategr"""
+import unittest
+from sofos import models as md
+
+
+class Tests(unittest.TestCase):
+
+    def test_CharField_01(self):
+        acf = md.CharField('label1', 5)
+        self.assertEqual(acf.typos, 'TEXT')
+        self.assertEqual(acf.label, 'label1')
+        self.assertEqual(acf.sql('tst'), 'tst TEXT NOT NULL')
+        self.assertEqual(acf.validate('tedlz'), True)
+        self.assertEqual(acf.validate('tedlaz'), False)
+
+    def test_CharNumField_01(self):
+        acn = md.CharNumField('numfield1', 5)
+        self.assertEqual(acn.typos, 'TEXT')
+        self.assertEqual(acn.sql('tst'), 'tst TEXT NOT NULL')
+        self.assertEqual(acn.validate('tedlz'), False)
+        self.assertEqual(acn.validate('12345'), True)
+        self.assertEqual(acn.validate('123456'), False)
+
+    def test_TextField_01(self):
+        act = md.TextField('txtfield1')
+        self.assertEqual(act.typos, 'TEXT')
+        self.assertEqual(act.sql('tst'), 'tst TEXT NOT NULL')
+        self.assertEqual(act.validate('tedlz'), True)
+
+    def test_DateField_01(self):
+        adf = md.DateField('datefield')
+        self.assertEqual(adf.typos, 'DATE')
+        self.assertEqual(adf.sql('tst'), 'tst DATE NOT NULL')
+        self.assertEqual(adf.validate('2017-01-01'), True)
+        self.assertEqual(adf.validate('sdfsf'), False)
+
+    def test_DateEmptyField_01(self):
+        adef = md.DateEmptyField('dateEmptyfield')
+        self.assertEqual(adef.typos, 'DATETIME')
+        self.assertEqual(adef.sql('tst'), 'tst DATETIME NOT NULL')
+        self.assertEqual(adef.validate('2017-01-01'), True)
+        self.assertEqual(adef.validate('sdf'), False)
+        self.assertEqual(adef.validate(''), True)
+        self.assertEqual(adef.validate(None), True)
+
+    def test_IntegerField_01(self):
+        aif = md.IntegerField('Integer field')
+        self.assertEqual(aif.typos, 'INTEGER')
+        self.assertEqual(aif.sql('tst'), 'tst INTEGER NOT NULL DEFAULT 0')
+        self.assertEqual(aif.validate(123), True)
+
+    def test_DecimalField_01(self):
+        dfld = md.DecimalField('decfield')
+        self.assertEqual(dfld.typos, 'DECIMAL')
+        self.assertEqual(dfld.sql('tst'), 'tst DECIMAL NOT NULL DEFAULT 0')
+        self.assertEqual(dfld.validate(123), True)
+        self.assertEqual(dfld.validate('123'), True)
+        self.assertEqual(dfld.validate(123.23), True)
+        self.assertEqual(dfld.validate('123.45'), True)
+        self.assertEqual(dfld.validate('12f'), False)
+        self.assertEqual(dfld.validate(''), False)
+
+    def test_WeekdaysField_01(self):
+        wdf = md.WeekdaysField('weekdays field')
+        self.assertEqual(wdf.typos, 'TEXT')
+        self.assertEqual(wdf.sql('tst'), 'tst TEXT NOT NULL')
+        self.assertTrue(wdf.validate('[1, 0, 0, 1, 1, 1, 0]'))
+        self.assertFalse(wdf.validate('[1, 0, 0]'))
+
+    def test_ForeignKey_01(self):
+        class Ftable(md.Model):
+            aa = md.CharField('tst', 10)
+        fkv = md.ForeignKey(Ftable, 'test')
+        self.assertEqual(fkv.typos, 'INTEGER')
+        tsql = 'tst INTEGER NOT NULL REFERENCES ftable(id)'
+        self.assertEqual(fkv.sql('tst'), tsql)
+        self.assertTrue(fkv.validate(12))
+        self.assertTrue(fkv.validate('12'))
+        self.assertFalse(fkv.validate('1221h'))
+
+    def test_Model_01(self):
+        class TstModel(md.Model):
+            fld1 = md.CharField('tst', 10)
+        mdl = TstModel('tst.db')
+        mdl.set(fld1='txt1')
+        mdl.set_from_dict({'fld1': 'txt2'})
+        self.assertRaises(ValueError, mdl.set_from_dict, {'fld2': 'txt2'})
+        TstModel.save_meta(':memory:', {'id': '', 'fld1': 'val1'})
+        TstModel.save_meta(':memory:', {'id': 1, 'fld1': 'val1'})
+        TstModel.search_deep(':memory:', 'tes1')
+        TstModel.search(':memory:', 'tes1')
+        TstModel.deep_fields()
+        TstModel.sql_create()

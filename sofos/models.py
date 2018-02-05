@@ -20,6 +20,8 @@ class Field():
         self.unique = unique
         self.default = default
         self.qt_widget = qt_widget
+        self.min_length = 0
+        self.max_length = 0
 
     def sql(self, field):
         """sql create for field
@@ -37,8 +39,10 @@ class Field():
         return tsq
 
     def validate(self, value):
-        """To be implemented by every child class"""
-        return False
+        lval = len(value)
+        if lval < self.min_length or lval > self.max_length:
+            return False
+        return True
 
 
 class CharField(Field):
@@ -50,12 +54,6 @@ class CharField(Field):
         super().__init__(label, null, unique, qt_widget='str')
         self.min_length = min_length
         self.max_length = max_length
-
-    def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
-            return False
-        return True
 
 
 class CharNumField(Field):
@@ -69,10 +67,9 @@ class CharNumField(Field):
         self.max_length = max_length
 
     def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
+        if not gr.is_positive_integer(value):
             return False
-        return True
+        return super().validate(value)
 
 
 class TextField(Field):
@@ -85,47 +82,29 @@ class TextField(Field):
         self.min_length = min_length
         self.max_length = max_length
 
-    def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
-            return False
-        return True
-
 
 class DateField(Field):
     """Date fields"""
     typos = 'DATE'
 
-    def __init__(self, label, max_length=10, null=False, unique=False,
-                 min_length=10):
+    def __init__(self, label, null=False, unique=False):
         super().__init__(label, null, unique, qt_widget='date')
-        self.min_length = min_length
-        self.max_length = max_length
 
     def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
-            return False
-        if value[4] != '-':
-            return False
-        return True
+        return gr.is_iso_date(value)
 
 
 class DateEmptyField(Field):
     """Date or empty fields"""
     typos = 'DATETIME'
 
-    def __init__(self, label, max_length=10, null=False, unique=False,
-                 min_length=0):
+    def __init__(self, label, null=False, unique=False):
         super().__init__(label, null, unique, qt_widget='date_or_empty')
-        self.min_length = min_length
-        self.max_length = max_length
 
     def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
-            return False
-        return True
+        if value is None or value == '':
+            return True
+        return gr.is_iso_date(value)
 
 
 class IntegerField(Field):
@@ -136,7 +115,7 @@ class IntegerField(Field):
         super().__init__(label, null, unique, default=default, qt_widget='int')
 
     def validate(self, value):
-        return int(value)
+        return gr.is_integer(value)
 
 
 class DecimalField(Field):
@@ -147,7 +126,7 @@ class DecimalField(Field):
         super().__init__(label, null, unique, default=default, qt_widget='num')
 
     def validate(self, value):
-        return int(value)
+        return gr.isNum(value)
 
 
 class WeekdaysField(Field):
@@ -161,10 +140,7 @@ class WeekdaysField(Field):
         self.max_length = max_length
 
     def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
-            return False
-        return True
+        return gr.is_weekdays(value)
 
 
 class ForeignKey(Field):
@@ -185,6 +161,10 @@ class ForeignKey(Field):
         tsq += ' %s' % unique if unique != '' else ''
         tsq += ' REFERENCES %s(id)' % self.ftable.__name__.lower()
         return tsq
+
+    def validate(self, value):
+        """Value must always be integer"""
+        return gr.is_integer(value)
 
 
 class Model():

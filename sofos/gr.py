@@ -108,14 +108,21 @@ def gr2dec(poso, decimals=2):
     return dec(ds, decimals)
 
 
-def is_positive_integer(val):
-    """True if positive integer False otherwise"""
-    dval = dec(val, 5)
-    if dval == 0:
+def is_integer(val):
+    """True if integer False otherwise"""
+    if not isNum(val):
         return False
+    dval = dec(val, 5)
     if dval - int(dval) != 0:
         return False
-    if dval <= 0:
+    return True
+
+
+def is_positive_integer(val):
+    """True if positive integer False otherwise"""
+    if not is_integer(val):
+        return False
+    if dec(val) <= 0:
         return False
     return True
 
@@ -244,3 +251,27 @@ def date2gr(date, no_trailing_zeros=False):
     if no_trailing_zeros:
         month, day = remove_zero(month), remove_zero(day)
     return '{day}/{month}/{year}'.format(year=year, month=month, day=day)
+
+
+def is_weekdays(value):
+    """Return True if value is weekdays False else"""
+    strval = str(value)
+    try:
+        val1 = eval(strval)
+    except TypeError:
+        return False
+    except SyntaxError:
+        return False
+    try:
+        lval = list(val1)
+    except TypeError:
+        return False
+    if len(lval) != 7:
+        return False
+    # Need to check every single value in thelist
+    for elm in lval:
+        try:
+            int(elm)
+        except TypeError:
+            return False
+    return True

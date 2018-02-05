@@ -36,6 +36,19 @@ class Tests(unittest.TestCase):
         dempty = qt.TDateEmpty()
         self.assertEqual(dempty.get(), '')
 
+    def test_TDateEmpty_02(self):
+        dempty = qt.TDateEmpty('2017-01-01')
+        self.assertEqual(dempty.get(), '2017-01-01')
+        QTest.mouseClick(dempty, Qc.Qt.RightButton)
+        QTest.mouseClick(dempty, Qc.Qt.LeftButton)
+        dempty.menu_calendar()
+
+    def test_TIntegerSpin_01(self):
+        isp = qt.TIntegerSpin()
+        self.assertEqual(isp.get(), 0)
+        isp.set(None)
+        self.assertEqual(isp.get(), 0)
+
     def test_TNumeric_01(self):
         qnu = qt.TNumeric()
         self.assertEqual(str(qnu.get()), '0.00')
@@ -47,3 +60,74 @@ class Tests(unittest.TestCase):
     def test_TNumeric_03(self):
         qnu = qt.TNumeric(None)
         self.assertEqual(str(qnu.get()), '0.00')
+
+    def test_TNumericSpin_01(self):
+        qns = qt.TNumericSpin(None)
+        self.assertEqual(str(qns.get()), '0.00')
+
+    def test_TText_01(self):
+        ttx = qt.TText(None)
+        self.assertEqual(ttx.get(), '')
+        ttx.set('')
+        self.assertEqual(ttx.get(), '')
+        ttx.set(' test again  ')
+        self.assertEqual(ttx.get(), 'test again')
+
+    def test_TTextLine_01(self):
+        ttl = qt.TTextLine(None)
+        self.assertEqual(ttl.get(), '')
+        ttl.set('')
+        self.assertEqual(ttl.get(), '')
+        ttl.set(' test ')
+        self.assertEqual(ttl.get(), 'test')
+
+    def test_TInteger_01(self):
+        tin = qt.TInteger(None)
+        self.assertEqual(tin.get(), '0')
+        tin.set('')
+        self.assertEqual(tin.get(), '0')
+        tin.set(100)
+        self.assertEqual(tin.get(), '100')
+
+    def test_TIntegerKey_01(self):
+        tink = qt.TIntegerKey(None)
+        self.assertEqual(tink.get(), '')
+        tink.set('')
+        self.assertEqual(tink.get(), '')
+        tink.set(100)
+        self.assertEqual(tink.get(), '100')
+
+    def test_TTextlineNum_01(self):
+        ttln = qt.TTextlineNum()
+        self.assertEqual(ttln.get(), '')
+        ttln = qt.TTextlineNum(None)
+        self.assertEqual(ttln.get(), '')
+        ttln.set(' 1234 ')
+        self.assertEqual(ttln.get(), '1234')
+
+    def test_TYesNoCombo_01(self):
+        ync = qt.TYesNoCombo(None)
+        self.assertEqual(ync.get(), False)
+        ync = qt.TYesNoCombo()
+        self.assertEqual(ync.get(), False)
+        ync.set(1)
+        self.assertEqual(ync.get(), True)
+
+    def test_TWeekdays_01(self):
+        twd = qt.TWeekdays(None)
+        self.assertEqual(twd.get(), '[0, 0, 0, 0, 0, 0, 0]')
+        twd = qt.TWeekdays()
+        self.assertEqual(twd.get(), '[1, 1, 1, 1, 1, 0, 0]')
+        self.assertEqual(twd.get(False), [1, 1, 1, 1, 1, 0, 0])
+        twd.set([1, 2])
+        self.assertEqual(twd.get(), '[0, 0, 0, 0, 0, 0, 0]')
+        twd.set5days()
+        self.assertEqual(twd.get(), '[1, 1, 1, 1, 1, 0, 0]')
+        QTest.mouseClick(twd, Qc.Qt.RightButton)
+        QTest.mouseClick(twd, Qc.Qt.LeftButton)
+
+    def test_TCombo_01(self):
+        tcb = qt.TCombo(None, vlist=[(1, 'aa'), (2, 'bb')])
+        self.assertEqual(tcb.get(), 1)
+        tcb.set(1)
+        self.assertEqual(tcb.get(), 1)
