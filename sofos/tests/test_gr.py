@@ -194,8 +194,30 @@ class Tests(unittest.TestCase):
 
     def test_is_weekdays_01(self):
         self.assertFalse(gr.is_weekdays(''))
+
+    def test_is_weekdays_02(self):
         self.assertFalse(gr.is_weekdays('[1, 2]'))
+
+    def test_is_weekdays_03(self):
         self.assertFalse(gr.is_weekdays([1, 1]))
+
+    def test_is_weekdays_04(self):
         self.assertFalse(gr.is_weekdays([1, 1, 1, 1, 1, 1]))
+
+    def test_is_weekdays_05(self):
         self.assertTrue(gr.is_weekdays('[1, 1, 1, 1, 1, 1, 1]'))
+
+    def test_is_weekdays_06(self):
         self.assertTrue(gr.is_weekdays([1, 1, 1, 1, 1, 1, 1]))
+
+    def test_is_weekdays_07(self):
+        self.assertFalse(gr.is_weekdays('ted'))
+
+    def test_is_weekdays_08(self):
+        self.assertFalse(gr.is_weekdays("{'a1': 'tst'}"))
+
+    def test_is_weekdays_09(self):
+        self.assertFalse(gr.is_weekdays([1, 1, 1, 1, 1, 1, [1, 2]]))
+
+    def test_is_weekdays_10(self):
+        self.assertFalse(gr.is_weekdays('True'))

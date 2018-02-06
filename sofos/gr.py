@@ -258,9 +258,7 @@ def is_weekdays(value):
     strval = str(value)
     try:
         val1 = eval(strval)
-    except TypeError:
-        return False
-    except SyntaxError:
+    except Exception:
         return False
     try:
         lval = list(val1)

@@ -11,7 +11,7 @@ from . import gr
 
 CONFIRMATIONS = True
 GRLOCALE = Qc.QLocale(Qc.QLocale.Greek, Qc.QLocale.Greece)
-MSG_RESET_DATE = u'Με δεξί κλίκ του ποντικιού μηδενίζει'
+MSG_RESET_DATE = u'Reset with right mouse click'
 MIN_HEIGHT = 30
 MAX_HEIGHT = 40
 DATE_MAX_WIDTH = 120
@@ -20,7 +20,7 @@ GREEK_DATE_FORMAT = 'd/M/yyyy'
 WEEKDAYS = ['Δε', 'Τρ', 'Τε', 'Πέ', 'Πα', 'Σά', 'Κυ']
 WEEKDAYS_FULL = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη',
                  'Παρασκευή', 'Σάββατο', 'Κυριακή']
-MSG_SELECT_DAYS = 'Επιλέξτε τις Εργάσιμες ημέρες\nΜε δεξί κλικ μηδενίστε'
+MSG_SELECT_DAYS = 'Select working days\nReset with right mouse click'
 BLANK, GREEN = range(2)
 
 
@@ -460,7 +460,7 @@ class AutoForm(Qw.QDialog):
         self._id = idv
         self.model = model
         self.setWindowTitle('{}: {}'.format(model.table_label(),
-                                            idv if idv else 'Νέα εγγραφή'))
+                                            idv if idv else 'New record'))
         self.widgets = {}
         main_layout = Qw.QVBoxLayout()
         self.setLayout(main_layout)
@@ -470,8 +470,8 @@ class AutoForm(Qw.QDialog):
         buttonlayout = Qw.QHBoxLayout()
         main_layout.addLayout(buttonlayout)
         # Create buttons here
-        self.bcancel = Qw.QPushButton(u'Ακύρωση', self)
-        self.bsave = Qw.QPushButton(u'Αποθήκευση', self)
+        self.bcancel = Qw.QPushButton(u'Cancel', self)
+        self.bsave = Qw.QPushButton(u'Save', self)
         # Make them loose focus
         self.bcancel.setFocusPolicy(Qc.Qt.NoFocus)
         self.bsave.setFocusPolicy(Qc.Qt.NoFocus)
@@ -506,14 +506,14 @@ class AutoForm(Qw.QDialog):
         status, lid = self.model.save_meta(self._dbf, data)
         if status:
             if lid:
-                msg = 'Νέα εγγραφή καταχωρήθηκε με Νο: %s' % lid
+                msg = 'New record saved with Νο: %s' % lid
             else:
-                msg = 'Ενημερώθηκε η εγγραφή Νο: %s' % data['id']
+                msg = 'Record Νο: %s updated' % data['id']
             if CONFIRMATIONS:
-                Qw.QMessageBox.information(self, "Αποθήκευση", msg)
+                Qw.QMessageBox.information(self, "Save", msg)
             self.accept()
         else:
-            Qw.QMessageBox.information(self, "Αποθήκευση", lid)
+            Qw.QMessageBox.information(self, "Save", lid)
 
     def userFriendlyCurrentFile(self):
         return self.table
@@ -522,7 +522,7 @@ class AutoForm(Qw.QDialog):
 class FindForm(AutoForm):
     def __init__(self, dbf, table, parent=None):
         super().__init__(dbf, table, parent=parent)
-        self.bsave.setText('Αναζήτηση')
+        self.bsave.setText('Search')
         self.bsave.setFocusPolicy(Qc.Qt.StrongFocus)
 
     def _save(self):
@@ -562,10 +562,10 @@ class AutoFormTable(Qw.QDialog):
         layout.addWidget(self.tbl)
         blay = Qw.QHBoxLayout()
         layout.addLayout(blay)
-        self.bedit = Qw.QPushButton('Επεξεργασία')
+        self.bedit = Qw.QPushButton('Edit')
         self.bedit.setFocusPolicy(Qc.Qt.NoFocus)
         blay.addWidget(self.bedit)
-        self.bnew = Qw.QPushButton('Νέα εγγραφή')
+        self.bnew = Qw.QPushButton('New record')
         self.bnew.setFocusPolicy(Qc.Qt.NoFocus)
         blay.addWidget(self.bnew)
 
@@ -630,7 +630,7 @@ class AutoFormTable(Qw.QDialog):
         tbl.setAlternatingRowColors(True)
         tbl.setSortingEnabled(True)
         tbl.setContextMenuPolicy(Qc.Qt.ActionsContextMenu)
-        editAction = Qw.QAction("Επεξεργασία", self)
+        editAction = Qw.QAction("edit", self)
         editAction.triggered.connect(self._edit_record)
         tbl.addAction(editAction)
         return tbl
@@ -653,12 +653,12 @@ class AutoFormTable(Qw.QDialog):
         item = Qw.QTableWidgetItem(st)
         return item
 
-    def _keyItem(self, strv, table):
-        stv = md.table_rpr(self._dbf, table, strv)
-        if stv == 'None':
-            stv = ''
-        item = Qw.QTableWidgetItem(stv)
-        return item
+    # def _keyItem(self, strv, table):
+    #     stv = md.table_rpr(self._dbf, table, strv)
+    #     if stv == 'None':
+    #         stv = ''
+    #     item = Qw.QTableWidgetItem(stv)
+    #     return item
 
     def _weekdayItem(self, strv):
         weekdays_list = eval(strv)
@@ -797,6 +797,13 @@ class TTextButton(Qw.QWidget):
 
 
 def wselector(field, parent):
+    """Factory to create widgets
+
+    :param field: object field
+    :param parent: parent object
+
+    :return: A customized qt widget
+    """
     if field.qt_widget == 'int':
         return TInteger(parent=parent)
     elif field.qt_widget == 'text_button':
