@@ -239,10 +239,10 @@ class MainWindow(Qw.QMainWindow):
 
         self.tblact = {}
         self.mapper = {}
-        for tbl in self.database.table_names():
+        for tbl, lbl in self.database.table_labels(True).items():
             self.mapper[tbl] = Qc.QSignalMapper(self)
-            self.tblact[tbl] = Qw.QAction(tbl, self)
-            self.tblact[tbl].setStatusTip('open %s' % tbl)
+            self.tblact[tbl] = Qw.QAction(lbl, self)
+            self.tblact[tbl].setStatusTip('open %s' % lbl)
             self.mapper[tbl].setMapping(self.tblact[tbl], tbl)
             self.tblact[tbl].triggered.connect(self.mapper[tbl].map)
             self.mapper[tbl].mapped['QString'].connect(self.createAutoFormTbl)
