@@ -4,6 +4,14 @@ sofos package
 Submodules
 ----------
 
+sofos\.database module
+----------------------
+
+.. automodule:: sofos.database
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 sofos\.dbf module
 -----------------
 

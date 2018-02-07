@@ -325,7 +325,7 @@ class Model():
     def select_all_deep(cls, dbf):
         """Deep select all"""
         metadata = cls.sql_select_all_deep(dbf)
-        success, rows = df.read(dbf, metadata['sql'], 'rows')
+        _, rows = df.read(dbf, metadata['sql'], 'rows')
         metadata['rows'] = rows
         metadata['rownum'] = len(rows)
         return metadata

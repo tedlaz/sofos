@@ -15,7 +15,7 @@ if sys.hexversion < 0x3040000:
 
 
 setup(name='sofos',
-      version='0.8.6',
+      version='0.8.7',
       description='Create Easily Gui Database Applications',
       long_description='',
       url='https://github.com/tedlaz/sofos',
