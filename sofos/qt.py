@@ -489,8 +489,8 @@ class AutoForm(Qw.QDialog):
         lbs = self.model.field_labels()
         self.widgets['id'] = TIntegerKey(parent=self)
         self.widgets['id'].setVisible(False)
-        for i, fld in enumerate(self.model.fields()):
-            self.widgets[fld] = wselector(self.model.field(fld), self)
+        for i, fld in enumerate(self.model.field_names()):
+            self.widgets[fld] = wselector(self.model.field_object(fld), self)
             self.fld_layout.insertRow(i, Qw.QLabel(lbs[fld]),
                                       self.widgets[fld])
 
@@ -503,7 +503,7 @@ class AutoForm(Qw.QDialog):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
-        status, lid = self.model.save_meta(self._dbf, data)
+        status, lid = self.model.save(self._dbf, data)
         if status:
             if lid:
                 msg = 'New record saved with Νο: %s' % lid

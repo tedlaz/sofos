@@ -81,13 +81,9 @@ class Tests(unittest.TestCase):
     def test_Model_01(self):
         class TstModel(md.Model):
             fld1 = md.CharField('tst', 10)
-        mdl = TstModel('tst.db')
-        mdl.set(fld1='txt1')
-        mdl.set_from_dict({'fld1': 'txt2'})
-        self.assertRaises(ValueError, mdl.set_from_dict, {'fld2': 'txt2'})
-        TstModel.save_meta(':memory:', {'id': '', 'fld1': 'val1'})
-        TstModel.save_meta(':memory:', {'id': 1, 'fld1': 'val1'})
+        mdl = TstModel()
+        TstModel.save(':memory:', {'id': '', 'fld1': 'val1'})
+        TstModel.save(':memory:', {'id': 1, 'fld1': 'val1'})
         TstModel.search_deep(':memory:', 'tes1')
         TstModel.search(':memory:', 'tes1')
-        TstModel.deep_fields()
         TstModel.sql_create()

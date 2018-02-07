@@ -7,8 +7,8 @@ import PyQt5.QtGui as Qg
 import PyQt5.QtWidgets as Qw
 import main_rc
 from sofos import qt
-from sofos import models as sofosmd
-from sofos import dbf as cd
+from sofos import database
+from sofos import dbf
 from settings import setup
 import models as md
 qt.CONFIRMATIONS = setup['confirmations']
@@ -20,7 +20,7 @@ class MainWindow(Qw.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowIcon(Qg.QIcon(':/images/app.png'))
-        self.tables = sofosmd.model_tables(md)  # Object {tablename: Model}
+        self.database = database.Database(md)
         self.settings = Qc.QSettings()
         self.mdiArea = Qw.QMdiArea()
         self.mdiArea.setHorizontalScrollBarPolicy(Qc.Qt.ScrollBarAsNeeded)
@@ -50,15 +50,15 @@ class MainWindow(Qw.QMainWindow):
         filename, _ = Qw.QFileDialog.getSaveFileName(
             self,
             "Create New Database",
-            self.dbf,
+            self.database.dbf,
             filtyp,
             options=options)
         if filename:
             if not filename.endswith('.%s' % setup['db_suffix']):
                 filename = '%s.%s' % (filename, setup['db_suffix'])
-            success, msg = cd.create_tables(filename, md, INIT_DB_DATA)
+            success, msg = self.database.create_database(filename, INIT_DB_DATA)
             if success:
-                self.update_dbf(filename)
+                self.update_dbf(self.database.dbf)
                 Qw.QMessageBox.information(
                     self,
                     setup['db_creation_title'],
@@ -71,24 +71,22 @@ class MainWindow(Qw.QMainWindow):
                     str(msg))
 
     def update_dbf(self, dbf):
-        if not cd.check_database_against_models(dbf, md):
+        if not self.database.set_database(dbf):
             Qw.QMessageBox.critical(
                 self,
                 "Πρόβλημα",
                 "Η βάση δεδομένων %s δεν είναι συμβατή" % dbf)
-            self.dbf = ''
             self.tablemenu.setEnabled(False)
         else:
-            self.dbf = dbf
             self.tablemenu.setEnabled(True)
-        self.setWindowTitle('%s %s' % (setup['application_title'], self.dbf))
+            self.setWindowTitle('%s %s' % (setup['application_title'], dbf))
 
     def open(self):
         filtyp = "sql3 App Files (*.%s)" % setup['db_suffix']
         filename, _ = Qw.QFileDialog.getOpenFileName(
             self,
             'Open database',
-            self.dbf,
+            self.database.dbf,
             filtyp)
         if filename:
             self.update_dbf(filename)
@@ -134,7 +132,8 @@ class MainWindow(Qw.QMainWindow):
             self.windowMapper.setMapping(action, window)
 
     def createAutoFormTbl(self, table):
-        child = qt.AutoFormTable(self.dbf, self.tables[table])
+        child = qt.AutoFormTable(
+            self.database.dbf, self.database.table_object(table))
         self.mdiArea.addSubWindow(child)
         child.show()
 
@@ -240,7 +239,7 @@ class MainWindow(Qw.QMainWindow):
 
         self.tblact = {}
         self.mapper = {}
-        for tbl in self.tables:
+        for tbl in self.database.table_names():
             self.mapper[tbl] = Qc.QSignalMapper(self)
             self.tblact[tbl] = Qw.QAction(tbl, self)
             self.tblact[tbl].setStatusTip('open %s' % tbl)
@@ -289,7 +288,7 @@ class MainWindow(Qw.QMainWindow):
         self.resize(size)
 
     def writeSettings(self):
-        self.settings.setValue('dbf', self.dbf)
+        self.settings.setValue('dbf', self.database.dbf)
         self.settings.setValue('pos', self.pos())
         self.settings.setValue('size', self.size())
 
