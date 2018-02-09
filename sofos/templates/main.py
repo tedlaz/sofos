@@ -131,8 +131,7 @@ class MainWindow(Qw.QMainWindow):
             self.windowMapper.setMapping(action, window)
 
     def createAutoFormTbl(self, table):
-        child = qt.AutoFormTable(
-            self.database.dbf, self.database.table_object(table))
+        child = qt.AutoFormTable(self.database.table_object(table))
         self.mdiArea.addSubWindow(child)
         child.show()
 

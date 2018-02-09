@@ -103,7 +103,10 @@ class Database():
         table_dict = {}
         for tbl in tables:
             model = getattr(self.models, tbl)
-            table_dict[model.table_name()] = getattr(self.models, tbl)
+            table_object = getattr(self.models, tbl)
+            # injecting database file name to table model here
+            table_object.__dbf__ = self.dbf
+            table_dict[model.table_name()] = table_object
         return table_dict
 
     def table_object(self, table_name):
@@ -111,7 +114,8 @@ class Database():
 
         :param table_name: table name
         """
-        return self.table_objects().get(table_name, None)
+        tableobject = self.table_objects().get(table_name, None)
+        return tableobject
 
     def table_names(self):
         """Returns table names"""

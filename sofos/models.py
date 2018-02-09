@@ -172,6 +172,7 @@ class ForeignKey(Field):
 class Model():
     """This class represents table. Most of the time it is used as meta class
     """
+    __dbf__ = 'jj'
 
     @classmethod
     def table_name(cls):

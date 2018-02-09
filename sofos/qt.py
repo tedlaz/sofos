@@ -439,7 +439,7 @@ class TComboDB(Qw.QComboBox):
         2.fill Combo
         3.set current index to initial value
         """
-        vlist = self._model.select_all_deep(self._parent._dbf)
+        vlist = self._model.select_all_deep(self._model.__dbf__)
         self.index2id = {}
         self.id2index = {}
         self.addItem('')
@@ -452,11 +452,11 @@ class TComboDB(Qw.QComboBox):
 
 
 class AutoForm(Qw.QDialog):
-    def __init__(self, dbf, model, idv=None, parent=None):
+    def __init__(self, model, idv=None, parent=None):
         super().__init__(parent)
         self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self._parent = parent
-        self._dbf = dbf
+        # self._dbf = dbf
         self._id = idv
         self.model = model
         self.setWindowTitle('{}: {}'.format(model.table_label(),
@@ -495,7 +495,7 @@ class AutoForm(Qw.QDialog):
                                       self.widgets[fld])
 
     def _fill(self):
-        self.vals = self.model.search_by_id(self._dbf, self._id)
+        self.vals = self.model.search_by_id(self.model.__dbf__, self._id)
         for key in self.vals:
             self.widgets[key].set(self.vals[key])
 
@@ -503,7 +503,7 @@ class AutoForm(Qw.QDialog):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
-        status, lid = self.model.save(self._dbf, data)
+        status, lid = self.model.save(self.model.__dbf__, data)
         if status:
             if lid:
                 msg = 'New record saved with Νο: %s' % lid
@@ -520,8 +520,9 @@ class AutoForm(Qw.QDialog):
 
 
 class FindForm(AutoForm):
-    def __init__(self, dbf, table, parent=None):
-        super().__init__(dbf, table, parent=parent)
+    """Use this form to search each fields values"""
+    def __init__(self, model, parent=None):
+        super().__init__(model, parent=parent)
         self.bsave.setText('Search')
         self.bsave.setFocusPolicy(Qc.Qt.StrongFocus)
 
@@ -532,18 +533,18 @@ class FindForm(AutoForm):
             if wval:
                 ast.append(wval)
         ast = ' '.join(ast)
-        formgrid = AutoFormTableFound(self._dbf, self._table, ast, self)
+        formgrid = AutoFormTableFound(self._table, ast, self)
         if formgrid.exec_() == Qw.QDialog.Accepted:
             print(formgrid.id)
 
 
 class AutoFormTable(Qw.QDialog):
-    def __init__(self, dbf, model, parent=None):
+    def __init__(self, model, parent=None):
         super().__init__(parent)
         # self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self.resize(550, 400)
         self._parent = parent
-        self._dbf = dbf
+        # self._dbf = dbf
         self.model = model
         self.setWindowTitle('{}'.format(self.model.table_label()))
         self._create_gui()
@@ -578,7 +579,7 @@ class AutoFormTable(Qw.QDialog):
         Qw.QDialog.keyPressEvent(self, ev)
 
     def _new_record(self):
-        dialog = AutoForm(self._dbf, self.model, parent=self)
+        dialog = AutoForm(self.model, parent=self)
         if dialog.exec_() == Qw.QDialog.Accepted:
             self._populate()
         else:
@@ -589,14 +590,14 @@ class AutoFormTable(Qw.QDialog):
         return self.tbl.item(self.tbl.currentRow(), 0).text()
 
     def _edit_record(self):
-        dialog = AutoForm(self._dbf, self.model, self.id, parent=self)
+        dialog = AutoForm(self.model, self.id, parent=self)
         if dialog.exec_() == Qw.QDialog.Accepted:
             self._populate()
         else:
             return False
 
     def _get_data(self):
-        return self.model.select_all_deep(self._dbf)
+        return self.model.select_all_deep(self.model.__dbf__)
 
     def _populate(self):
         data = self._get_data()
@@ -674,14 +675,14 @@ class AutoFormTable(Qw.QDialog):
 
 
 class AutoFormTableFound(AutoFormTable):
-    def __init__(self, dbf, model, search_string, parent=None):
+    def __init__(self, model, search_string, parent=None):
         self.search_string = search_string
-        super().__init__(dbf, model, parent)
+        super().__init__(model, parent)
         self.tbl.cellDoubleClicked.disconnect(self._edit_record)
         self.tbl.cellDoubleClicked.connect(self.accept)
 
     def _get_data(self):
-        return self.model.search_deep(self._dbf, self.search_string)
+        return self.model.search_deep(self.model.__dbf__, self.search_string)
 
     def keyPressEvent(self, ev):
         '''use enter or return for fast selection'''
@@ -707,7 +708,7 @@ class TTextButton(Qw.QWidget):
         """parent must have ._dbf"""
         super().__init__(parent)
         self._parent = parent
-        self._dbf = parent._dbf
+        # self._dbf = parent._dbf
         self._model = model
         self.txt_initial = ''
         # Create Gui
@@ -720,7 +721,7 @@ class TTextButton(Qw.QWidget):
             self.idv = ''
             self._set_state(0)
             return
-        dicval = self._model.search_by_id_deep(self._dbf, idv)
+        dicval = self._model.search_by_id_deep(self._model.__dbf__, idv)
         self._set_state(1 if dicval else 0)
         self.txt_initial = self._rpr(dicval)
         self.rpr = self.txt_initial
@@ -763,7 +764,7 @@ class TTextButton(Qw.QWidget):
     def _button_clicked(self):
         self.button.setFocus()
         # vals = self._model.select_all(self._dbf)
-        ffind = AutoFormTableFound(self._parent._dbf, self._model, '', self)
+        ffind = AutoFormTableFound(self._model, '', self)
         if ffind.exec_() == Qw.QDialog.Accepted:
             self.set(ffind.id)
         else:
@@ -779,12 +780,11 @@ class TTextButton(Qw.QWidget):
         """
         :param text: text separated by space multi-search values 'va1 val2 ..'
         """
-        vals = self._model.search_deep(self._dbf, text)
+        vals = self._model.search_deep(self._model.__dbf__, text)
         if vals['rownum'] == 1:
-            self.set(vals['rows'][0][0])
+            self.set(vals['rows'][0][0])  # Assuming first val is id
         elif vals['rownum'] > 1:
-            ffind = AutoFormTableFound(self._parent._dbf, self._model,
-                                       text, self)
+            ffind = AutoFormTableFound(self._model, text, self)
             if ffind.exec_() == Qw.QDialog.Accepted:
                 self.set(ffind.id)
         else:
