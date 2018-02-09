@@ -515,8 +515,8 @@ class AutoForm(Qw.QDialog):
         else:
             Qw.QMessageBox.information(self, "Save", lid)
 
-    def userFriendlyCurrentFile(self):
-        return self.table
+    # def userFriendlyCurrentFile(self):
+    #     return self.table
 
 
 class FindForm(AutoForm):
@@ -787,8 +787,6 @@ class TTextButton(Qw.QWidget):
                                        text, self)
             if ffind.exec_() == Qw.QDialog.Accepted:
                 self.set(ffind.id)
-            else:
-                self._set_state(1 if self.txt == self.text.text() else 0)
         else:
             self.valNotFound.emit(self.text.text())
 

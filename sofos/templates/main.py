@@ -8,12 +8,11 @@ import PyQt5.QtWidgets as Qw
 import main_rc
 from sofos import qt
 from sofos import database
-from sofos import dbf
 from settings import setup
 import models as md
 qt.CONFIRMATIONS = setup['confirmations']
 BDIR = os.path.dirname(md.__file__)
-INIT_DB_DATA = os.path.join(BDIR, 'init_db.sql')
+INIT_DB = os.path.join(BDIR, 'init_db.sql')
 
 
 class MainWindow(Qw.QMainWindow):
@@ -56,7 +55,7 @@ class MainWindow(Qw.QMainWindow):
         if filename:
             if not filename.endswith('.%s' % setup['db_suffix']):
                 filename = '%s.%s' % (filename, setup['db_suffix'])
-            success, msg = self.database.create_database(filename, INIT_DB_DATA)
+            success, msg = self.database.create_database(filename, INIT_DB)
             if success:
                 self.update_dbf(self.database.dbf)
                 Qw.QMessageBox.information(

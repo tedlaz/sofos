@@ -10,8 +10,13 @@ class Database():
     """Database Class"""
 
     def __init__(self, models, dbf=None):
+        """Initialize
+
+        :param models: user models module
+        :param dbf: database file
+        """
         self.models = models
-        self.dbf = dbf
+        self.dbf = dbf if self.set_database(dbf) else None
 
     def set_database(self, dbf):
         """Set database if compatible
@@ -20,6 +25,8 @@ class Database():
 
         :return: True or False.
         """
+        if not dbf:
+            return False
         if self.is_database_compatible(dbf):
             self.dbf = dbf
             return True
