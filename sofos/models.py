@@ -172,7 +172,7 @@ class ForeignKey(Field):
 class Model():
     """This class represents table. Most of the time it is used as meta class
     """
-    __dbf__ = 'jj'
+    __dbf__ = None
 
     @classmethod
     def table_name(cls):
@@ -252,7 +252,7 @@ class Model():
         return 'SELECT * FROM %s' % cls.__name__.lower()
 
     @classmethod
-    def sql_select_all_deep(cls, dbf, field_list=None, label_list=None,
+    def sql_select_all_deep(cls, field_list=None, label_list=None,
                             qt_widget_list=None, joins=None):
         """Returns sql with all relations of table
 
@@ -281,7 +281,7 @@ class Model():
                 joins.append(intl % (ftbl, ftbl, table_name, fld))
                 fld_dic[table_name].append(
                     object_fld.ftable.sql_select_all_deep(
-                        dbf, field_list, label_list, qt_widget_list, joins))
+                        field_list, label_list, qt_widget_list, joins))
             else:
                 fld_dic[table_name].append('%s.%s' % (table_name, fld))
                 field_list.append('%s.%s' % (table_name, fld))
@@ -308,12 +308,14 @@ class Model():
     #                 pass
 
     @classmethod
-    def save(cls, dbf, dva):
+    def save(cls, dva):
         """Save Data dictionary dva to database
 
         :param dbf: Database file
 
         :param dva: dictionary of values"""
+        if not cls.__dbf__:
+            return False, 'No Database connection'
         if dva['id'] is None or dva['id'] == '':
             sqt = 'INSERT INTO %s(%s) VALUES(%s);'
             flds = ', '.join([i for i in dva.keys() if i != 'id'])
@@ -323,26 +325,32 @@ class Model():
             sqt = "UPDATE %s SET %s WHERE id='%s';"
             sts = ', '.join(["%s='%s'" % (i, j) for i, j in dva.items()])
             sql = sqt % (cls.table_name(), sts, dva['id'])
-        return df.save(dbf, sql)
+        return df.save(cls.__dbf__, sql)
 
     @classmethod
-    def select_all(cls, dbf):
+    def select_all(cls):
         """Select all(To be corrected)"""
+        if not cls.__dbf__:
+            return False, 'No Database connection'
         sql = 'SELECT * FROM %s' % cls.__name__.lower()
-        return df.read(dbf, sql, 'cols_rows')
+        return df.read(cls.__dbf__, sql, 'cols_rows')
 
     @classmethod
-    def select_all_deep(cls, dbf):
+    def select_all_deep(cls):
         """Deep select all"""
-        metadata = cls.sql_select_all_deep(dbf)
-        _, rows = df.read(dbf, metadata['sql'], 'rows')
+        if not cls.__dbf__:
+            return False, 'No Database connection'
+        metadata = cls.sql_select_all_deep()
+        _, rows = df.read(cls.__dbf__, metadata['sql'], 'rows')
         metadata['rows'] = rows
         metadata['rownum'] = len(rows)
         return metadata
 
     @classmethod
-    def search(cls, dbf, search_string):
+    def search(cls, search_string):
         """Find records with many key words in search_string"""
+        if not cls.__dbf__:
+            return False, 'No Database connection'
         search_list = search_string.split()
         search_sql = []
         search_field = " || ' ' || ".join(cls.field_names())
@@ -355,18 +363,20 @@ class Model():
             where = 'WHERE'
         # if not search_string sql is simple select
         sql = sql1 + where + ' AND '.join(search_sql)
-        adic = df.read(dbf, sql, 'cols_rows')
+        adic = df.read(cls.__dbf__, sql, 'cols_rows')
         return adic
 
     @classmethod
-    def search_deep(cls, dbf, search_string):
+    def search_deep(cls, search_string):
         """Deep search
 
         :param dbf: Database file
         :param search_string: search string
         """
+        if not cls.__dbf__:
+            return False, 'No Database connection'
         search_list = search_string.split()
-        meta = cls.sql_select_all_deep(dbf)
+        meta = cls.sql_select_all_deep()
         search_field = " || ' ' || ".join(meta['cols'])
         where = ''
         search_sql = []
@@ -376,13 +386,13 @@ class Model():
             search_sql.append(tstr)
             where = ' WHERE '
         sql = meta['sql'] + where + ' AND '.join(search_sql)
-        success, rows = df.read(dbf, sql, 'rows')
+        _, rows = df.read(cls.__dbf__, sql, 'rows')
         meta['rows'] = rows
         meta['rownum'] = len(rows)
         return meta
 
     @classmethod
-    def search_by_id(cls, dbf, idv):
+    def search_by_id(cls, idv):
         """Search for a specific record by id
 
         :param dbf: Database file
@@ -390,12 +400,14 @@ class Model():
 
         :return: a dictionary with data or None (if not found)
         """
+        if not cls.__dbf__:
+            return False, 'No Database connection'
         sql = "SELECT * FROM %s WHERE id='%s'" % (cls.__name__, idv)
-        success, record = df.read(dbf, sql, 'one')
+        _, record = df.read(cls.__dbf__, sql, 'one')
         return record
 
     @classmethod
-    def search_by_id_deep(cls, dbf, idv):
+    def search_by_id_deep(cls, idv):
         """Search for a specific record by id deep. Deep means that it returns
            every data from every parent table it finds.
 
@@ -403,7 +415,9 @@ class Model():
         :param idv: the id to find
         :return: a dictionary with data or None (if not found)
         """
-        data = cls.sql_select_all_deep(dbf)
+        if not cls.__dbf__:
+            return False, 'No Database connection'
+        data = cls.sql_select_all_deep()
         sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
-        success, record = df.read(dbf, sql, 'one')
+        _, record = df.read(cls.__dbf__, sql, 'one')
         return record

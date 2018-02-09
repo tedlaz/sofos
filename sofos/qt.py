@@ -439,7 +439,7 @@ class TComboDB(Qw.QComboBox):
         2.fill Combo
         3.set current index to initial value
         """
-        vlist = self._model.select_all_deep(self._model.__dbf__)
+        vlist = self._model.select_all_deep()
         self.index2id = {}
         self.id2index = {}
         self.addItem('')
@@ -456,7 +456,6 @@ class AutoForm(Qw.QDialog):
         super().__init__(parent)
         self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self._parent = parent
-        # self._dbf = dbf
         self._id = idv
         self.model = model
         self.setWindowTitle('{}: {}'.format(model.table_label(),
@@ -495,7 +494,7 @@ class AutoForm(Qw.QDialog):
                                       self.widgets[fld])
 
     def _fill(self):
-        self.vals = self.model.search_by_id(self.model.__dbf__, self._id)
+        self.vals = self.model.search_by_id(self._id)
         for key in self.vals:
             self.widgets[key].set(self.vals[key])
 
@@ -503,7 +502,7 @@ class AutoForm(Qw.QDialog):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
-        status, lid = self.model.save(self.model.__dbf__, data)
+        status, lid = self.model.save(data)
         if status:
             if lid:
                 msg = 'New record saved with Νο: %s' % lid
@@ -514,9 +513,6 @@ class AutoForm(Qw.QDialog):
             self.accept()
         else:
             Qw.QMessageBox.information(self, "Save", lid)
-
-    # def userFriendlyCurrentFile(self):
-    #     return self.table
 
 
 class FindForm(AutoForm):
@@ -576,7 +572,7 @@ class AutoFormTable(Qw.QDialog):
             self._edit_record()
         elif ev.key() == Qc.Qt.Key_Insert:
             self._new_record()
-        Qw.QDialog.keyPressEvent(self, ev)
+        # Qw.QDialog.keyPressEvent(self, ev)
 
     def _new_record(self):
         dialog = AutoForm(self.model, parent=self)
@@ -597,7 +593,7 @@ class AutoFormTable(Qw.QDialog):
             return False
 
     def _get_data(self):
-        return self.model.select_all_deep(self.model.__dbf__)
+        return self.model.select_all_deep()
 
     def _populate(self):
         data = self._get_data()
@@ -654,13 +650,6 @@ class AutoFormTable(Qw.QDialog):
         item = Qw.QTableWidgetItem(st)
         return item
 
-    # def _keyItem(self, strv, table):
-    #     stv = md.table_rpr(self._dbf, table, strv)
-    #     if stv == 'None':
-    #         stv = ''
-    #     item = Qw.QTableWidgetItem(stv)
-    #     return item
-
     def _weekdayItem(self, strv):
         weekdays_list = eval(strv)
         weekdays_string_list = []
@@ -682,7 +671,7 @@ class AutoFormTableFound(AutoFormTable):
         self.tbl.cellDoubleClicked.connect(self.accept)
 
     def _get_data(self):
-        return self.model.search_deep(self.model.__dbf__, self.search_string)
+        return self.model.search_deep(self.search_string)
 
     def keyPressEvent(self, ev):
         '''use enter or return for fast selection'''
@@ -721,7 +710,7 @@ class TTextButton(Qw.QWidget):
             self.idv = ''
             self._set_state(0)
             return
-        dicval = self._model.search_by_id_deep(self._model.__dbf__, idv)
+        dicval = self._model.search_by_id_deep(idv)
         self._set_state(1 if dicval else 0)
         self.txt_initial = self._rpr(dicval)
         self.rpr = self.txt_initial
@@ -780,7 +769,7 @@ class TTextButton(Qw.QWidget):
         """
         :param text: text separated by space multi-search values 'va1 val2 ..'
         """
-        vals = self._model.search_deep(self._model.__dbf__, text)
+        vals = self._model.search_deep(text)
         if vals['rownum'] == 1:
             self.set(vals['rows'][0][0])  # Assuming first val is id
         elif vals['rownum'] > 1:

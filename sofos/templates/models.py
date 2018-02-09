@@ -143,6 +143,7 @@ class Proslipsi(models.Model):
 
     class Meta:
         table_label = 'Προσλήψεις'
+        repr_fields = ['erg', 'dpr']
 
 
 class Xrisi(models.Model):
