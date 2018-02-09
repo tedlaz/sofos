@@ -222,6 +222,15 @@ class Model():
         return ''
 
     @classmethod
+    def repr_fields(cls):
+        """Representation fields"""
+        if 'Meta' in cls.__dict__.keys():
+            meta = getattr(cls, 'Meta')
+            if hasattr(meta, 'repr_fields'):
+                return cls.Meta.repr_fields
+        return None
+
+    @classmethod
     def sql_create(cls):
         """get sql for Table creation"""
         _sq = "CREATE TABLE IF NOT EXISTS %s(\n" % cls.table_name()
@@ -255,7 +264,7 @@ class Model():
         """
         table_name = cls.__name__.lower()
         sqt = "SELECT %s\nFROM %s\n%s"
-        flds = cls.field_names()
+        flds = cls.repr_fields() or cls.field_names()
         fld_dic = {table_name: []}
         field_list = field_list or ['%s.id' % table_name]
         label_list = label_list or ['ΑΑ']

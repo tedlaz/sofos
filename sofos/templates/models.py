@@ -57,6 +57,7 @@ class Erg(models.Model):
     class Meta:
         unique_together = ['epo', 'ono']
         table_label = 'Εργαζόμενοι'
+        repr_fields = ['epo', 'ono']
 
     def __str__(self):
         return '%s %s' % (self.epo, self.ono)
@@ -77,6 +78,7 @@ class Parartima(models.Model):
 
     class Meta:
         table_label = "Παράρτημα"
+        repr_fields = ['par']
 
 
 class ApodoxesType(models.Model):
