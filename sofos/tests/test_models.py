@@ -77,13 +77,3 @@ class Tests(unittest.TestCase):
         self.assertTrue(fkv.validate(12))
         self.assertTrue(fkv.validate('12'))
         self.assertFalse(fkv.validate('1221h'))
-
-    def test_Model_01(self):
-        class TstModel(md.Model):
-            fld1 = md.CharField('tst', 10)
-        mdl = TstModel()
-        TstModel.save(':memory:', {'id': '', 'fld1': 'val1'})
-        TstModel.save(':memory:', {'id': 1, 'fld1': 'val1'})
-        TstModel.search_deep(':memory:', 'tes1')
-        TstModel.search(':memory:', 'tes1')
-        TstModel.sql_create()
