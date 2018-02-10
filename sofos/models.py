@@ -12,6 +12,7 @@ class Field():
     """This is the base class of all field classes
     """
     typos = ''
+    fkey = False
 
     def __init__(self, label='', null=False, unique=False, default=None,
                  qt_widget='str'):
@@ -148,6 +149,7 @@ class WeekdaysField(Field):
 class ForeignKey(Field):
     """Foreign key fields"""
     typos = 'INTEGER'
+    fkey = True
 
     def __init__(self, ftable, label, qt_widget='text_button',
                  null=False, unique=False, default=None):
@@ -211,6 +213,13 @@ class Model():
     def field_names(cls):
         """Get a list of field names"""
         return [i for i in cls.__dict__.keys() if i[:1] != '_' and i != 'Meta']
+
+    @classmethod
+    def field_objects(cls):
+        dicf = {}
+        for fname in cls.field_names():
+            dicf[fname] = cls.field_object(fname)
+        return dicf
 
     @classmethod
     def _unique_together(cls):
@@ -326,6 +335,12 @@ class Model():
             sts = ', '.join(["%s='%s'" % (i, j) for i, j in dva.items()])
             sql = sqt % (cls.table_name(), sts, dva['id'])
         return df.save(cls.__dbf__, sql)
+
+    @classmethod
+    def delete(cls, idv):
+        sql = "DELETE FROM %s WHERE id='%s';" % (cls.table_name(), idv)
+        return df.delete(cls.__dbf__, sql)
+
 
     @classmethod
     def select_all(cls):

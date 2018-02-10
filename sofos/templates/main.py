@@ -70,7 +70,9 @@ class MainWindow(Qw.QMainWindow):
                     str(msg))
 
     def update_dbf(self, dbf):
-        if not self.database.set_database(dbf):
+        if not dbf:
+            self.tablemenu.setEnabled(False)
+        elif not self.database.set_database(dbf):
             Qw.QMessageBox.critical(
                 self,
                 "Πρόβλημα",

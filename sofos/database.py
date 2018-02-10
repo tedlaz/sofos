@@ -18,6 +18,28 @@ class Database():
         self.models = models
         self.dbf = dbf if self.set_database(dbf) else None
 
+    def integrity_dict(self):
+        in_dic = {}
+        for table_name, table_object in self.table_objects().items():
+            for fld_name, fld_obj in table_object.field_objects().items():
+                if fld_obj.fkey:
+                    parent = fld_obj.ftable.table_name()
+                    child = table_name
+                    field = fld_name
+                    in_dic[parent] = in_dic.get(parent, {})
+                    in_dic[parent][child] = field
+        return in_dic
+
+    def integrity(self, parent_table, idv):
+        idict = self.integrity_dict()
+        if parent_table not in idict:
+            return False
+        else:
+            for child, field in idict[parent_table].items():
+                if dbi.ref_exists(self.dbf, child, field, idv):
+                    return True
+        return False
+
     def set_database(self, dbf):
         """Set database if compatible
 
@@ -106,6 +128,7 @@ class Database():
             table_object = getattr(self.models, tbl)
             # injecting database file name to table model here
             table_object.__dbf__ = self.dbf
+            table_object.__database__ = self
             table_dict[model.table_name()] = table_object
         return table_dict
 

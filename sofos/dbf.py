@@ -107,7 +107,7 @@ def delete(dbf, sql):
         return False, str(err)
     cur.close()
     con.close()
-    return True
+    return True, 'Record deleted'
 
 
 def script(dbf, sql, create=False):
@@ -166,3 +166,21 @@ def backup(dbf, backupfile, overwrite=False, inserts_only=True):
     with open(backupfile, 'w') as fil:
         fil.write(data)
     return True, 'Database %s backup saved to %s' % (dbf, backupfile)
+
+
+def ref_exists(dbf, table, field, idv):
+    sql = "SELECT COUNT(*) FROM %s WHERE %s='%s'" % (table, field, idv)
+    if not os.path.isfile(dbf):
+        return False, 'File %s does not exist' % dbf
+    try:
+        with sqlite3.connect(dbf) as con:
+            cur = con.cursor()
+            cur.execute(sql)
+            row = cur.fetchone()
+    except sqlite3.Error as err:
+        return False, '%s\n' % err
+    except Exception as err:
+        return False, err
+    if row[0] > 0:
+        return True
+    return False

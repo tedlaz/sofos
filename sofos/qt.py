@@ -627,10 +627,33 @@ class AutoFormTable(Qw.QDialog):
         tbl.setAlternatingRowColors(True)
         tbl.setSortingEnabled(True)
         tbl.setContextMenuPolicy(Qc.Qt.ActionsContextMenu)
-        editAction = Qw.QAction("edit", self)
+        editAction = Qw.QAction("Edit", self)
         editAction.triggered.connect(self._edit_record)
         tbl.addAction(editAction)
+        deleteAction = Qw.QAction("Delete", self)
+        deleteAction.triggered.connect(self._delete_record)
+        tbl.addAction(deleteAction)
         return tbl
+
+    def _delete_record(self):
+        """Todo:
+        1. Add verification message
+        2. Add checks before delete concerning referencial integrity
+        """
+        # success, msg = self.model.delete(self.id)
+        is_in_relation = self.model.__database__.integrity(
+            self.model.table_name(), self.id)
+        if not is_in_relation:
+            success, msg = self.model.delete(self.id)
+            if success:
+                self._populate()
+            else:
+                return False, msg
+        else:
+            Qw.QMessageBox.critical(
+                self,
+                "Delete is not allowed",
+                "Record exists in relation")
 
     def _intItem(self, num):
         item = Qw.QTableWidgetItem()
