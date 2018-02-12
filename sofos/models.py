@@ -232,12 +232,13 @@ class Model():
 
     @classmethod
     def repr_fields(cls):
-        """Representation fields"""
+        """Representation fields
+        """
         if 'Meta' in cls.__dict__.keys():
             meta = getattr(cls, 'Meta')
             if hasattr(meta, 'repr_fields'):
                 return cls.Meta.repr_fields
-        return None
+        return cls.field_names()
 
     @classmethod
     def sql_create(cls):
@@ -273,7 +274,7 @@ class Model():
         """
         table_name = cls.__name__.lower()
         sqt = "SELECT %s\nFROM %s\n%s"
-        flds = cls.repr_fields() or cls.field_names()
+        flds = cls.repr_fields()
         fld_dic = {table_name: []}
         field_list = field_list or ['%s.id' % table_name]
         label_list = label_list or ['ΑΑ']
@@ -340,7 +341,6 @@ class Model():
     def delete(cls, idv):
         sql = "DELETE FROM %s WHERE id='%s';" % (cls.table_name(), idv)
         return df.delete(cls.__dbf__, sql)
-
 
     @classmethod
     def select_all(cls):

@@ -19,6 +19,10 @@ class Database():
         self.dbf = dbf if self.set_database(dbf) else None
 
     def integrity_dict(self):
+        """Integrity dictionary
+
+        :return: Dictionary {parent1: {child1: fld1, child2: fld2, ...}, ...}
+        """
         in_dic = {}
         for table_name, table_object in self.table_objects().items():
             for fld_name, fld_obj in table_object.field_objects().items():

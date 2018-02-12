@@ -455,34 +455,42 @@ class AutoForm(Qw.QDialog):
     def __init__(self, model, idv=None, parent=None):
         super().__init__(parent)
         self.setAttribute(Qc.Qt.WA_DeleteOnClose)
-        self._parent = parent
+        self._set(model, idv)
+        self._wtitle()
+        self._create_layouts()
+        self._create_Buttons()
+        self._create_fields()
+        self.populate()
+
+    def _wtitle(self):
+        self.setWindowTitle('{}: {}'.format(
+            self.model.table_label(), self._id if self._id else 'New record'))
+
+    def _set(self, model, idv):
         self._id = idv
         self.model = model
-        self.setWindowTitle('{}: {}'.format(model.table_label(),
-                                            idv if idv else 'New record'))
         self.widgets = {}
-        main_layout = Qw.QVBoxLayout()
-        self.setLayout(main_layout)
+
+    def _create_layouts(self):
+        self.main_layout = Qw.QVBoxLayout()
+        self.setLayout(self.main_layout)
         self.fld_layout = Qw.QFormLayout()
-        main_layout.addLayout(self.fld_layout)
-        # Create buttons
-        buttonlayout = Qw.QHBoxLayout()
-        main_layout.addLayout(buttonlayout)
-        # Create buttons here
+        self.main_layout.addLayout(self.fld_layout)
+        self.buttonlayout = Qw.QHBoxLayout()
+        self.main_layout.addLayout(self.buttonlayout)
+
+    def _create_Buttons(self):
         self.bcancel = Qw.QPushButton(u'Cancel', self)
         self.bsave = Qw.QPushButton(u'Save', self)
         # Make them loose focus
         self.bcancel.setFocusPolicy(Qc.Qt.NoFocus)
         self.bsave.setFocusPolicy(Qc.Qt.NoFocus)
         # Add them to buttonlayout
-        buttonlayout.addWidget(self.bcancel)
-        buttonlayout.addWidget(self.bsave)
-        # Make connections here
+        self.buttonlayout.addWidget(self.bcancel)
+        self.buttonlayout.addWidget(self.bsave)
+        # Make connections
         self.bcancel.clicked.connect(self.close)
-        self.bsave.clicked.connect(self._save)
-        self._create_fields()  # Δημιουργία widgets
-        if self._id:  # Γέμισμα με τιμές
-            self._fill()
+        self.bsave.clicked.connect(self.save)
 
     def _create_fields(self):
         lbs = self.model.field_labels()
@@ -490,18 +498,25 @@ class AutoForm(Qw.QDialog):
         self.widgets['id'].setVisible(False)
         for i, fld in enumerate(self.model.field_names()):
             self.widgets[fld] = wselector(self.model.field_object(fld), self)
-            self.fld_layout.insertRow(i, Qw.QLabel(lbs[fld]),
-                                      self.widgets[fld])
+            self.fld_layout.insertRow(
+                i, Qw.QLabel(lbs[fld]), self.widgets[fld])
 
-    def _fill(self):
+    def populate(self):
+        if not self._id:
+            return
         self.vals = self.model.search_by_id(self._id)
-        for key in self.vals:
+        for key in self.widgets:
             self.widgets[key].set(self.vals[key])
 
-    def _save(self):
+    @property
+    def get_data(self):
         data = {}
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
+        return data
+
+    def save(self):
+        data = self.get_data
         status, lid = self.model.save(data)
         if status:
             if lid:
@@ -539,13 +554,14 @@ class AutoFormTable(Qw.QDialog):
         super().__init__(parent)
         # self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self.resize(550, 400)
-        self._parent = parent
-        # self._dbf = dbf
         self.model = model
-        self.setWindowTitle('{}'.format(self.model.table_label()))
+        self._wtitle()
         self._create_gui()
         self._make_connections()
         self._populate()
+
+    def _wtitle(self):
+        self.setWindowTitle('{}'.format(self.model.table_label()))
 
     def _make_connections(self):
         self.bedit.clicked.connect(self._edit_record)
@@ -600,7 +616,6 @@ class AutoFormTable(Qw.QDialog):
         self.tbl.setRowCount(data['rownum'])
         self.tbl.setColumnCount(data['colnum'])
         self.tbl.setHorizontalHeaderLabels(data['labels'])
-
         for i, row in enumerate(data['rows']):
             for j, qt_widget in enumerate(data['qt_widgets_types']):
                 val = row[j]
@@ -684,6 +699,27 @@ class AutoFormTable(Qw.QDialog):
 
     def table_label(self):
         return self.model.table_label()
+
+
+class AutoFormTableWidget(AutoFormTable):
+
+    def _populate(self):
+        _, data = self.model.select_all()
+        self.tbl.setRowCount(data['rownum'])
+        self.tbl.setColumnCount(data['colnum'])
+        # self.tbl.setHorizontalHeaderLabels(data['labels'])
+        fields = self.model.field_objects()
+        for i, row in enumerate(data['rows']):
+            item = TIntegerKey(parent=self)
+            item.set(row[0])
+            self.tbl.setCellWidget(i, 0, item)
+            for j, col in enumerate(fields):
+                val = row[j+1]
+                item = wselector(fields[col], parent=self)
+                print(val)
+                item.set(val)
+                self.tbl.setCellWidget(i, j+1, item)
+        self.tbl.resizeColumnsToContents()
 
 
 class AutoFormTableFound(AutoFormTable):

@@ -103,6 +103,7 @@ class Eidikotita(models.Model):
 
     class Meta:
         table_label = "Ειδικότητα εργασίας"
+        repr_fields = ['eip']
 
 
 class ApasxolisiType(models.Model):

@@ -10,6 +10,7 @@ from sofos import qt
 from sofos import database
 from settings import setup
 import models as md
+# from forms import Form1
 qt.CONFIRMATIONS = setup['confirmations']
 BDIR = os.path.dirname(md.__file__)
 INIT_DB = os.path.join(BDIR, 'init_db.sql')
@@ -237,6 +238,12 @@ class MainWindow(Qw.QMainWindow):
             statusTip="Show the Qt library's About box",
             triggered=Qw.QApplication.instance().aboutQt)
 
+        # self.form1_action = Qw.QAction(
+        #     "Form1",
+        #     self,
+        #     statusTip="Open form1",
+        #     triggered=self.open_form1)
+
         self.tblact = {}
         self.mapper = {}
         for tbl, lbl in self.database.table_labels(True).items():
@@ -247,14 +254,19 @@ class MainWindow(Qw.QMainWindow):
             self.tblact[tbl].triggered.connect(self.mapper[tbl].map)
             self.mapper[tbl].mapped['QString'].connect(self.createAutoFormTbl)
 
+    # def open_form1(self):
+    #     child = Form1(self.database.table_object('erg'), parent=self)
+    #     self.mdiArea.addSubWindow(child)
+    #     child.show()
+
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
         self.fileMenu.addAction(self.newAct)
         self.fileMenu.addAction(self.openAct)
         self.fileMenu.addSeparator()
-        action = self.fileMenu.addAction("Switch layout direction")
+        # action = self.fileMenu.addAction("Switch layout direction")
+        # action.triggered.connect(self.switchLayoutDirection)
         self.fileMenu.addAction(self.backupAct)
-        action.triggered.connect(self.switchLayoutDirection)
         self.fileMenu.addAction(self.exitAct)
 
         self.windowMenu = self.menuBar().addMenu("&Window")
@@ -264,6 +276,9 @@ class MainWindow(Qw.QMainWindow):
         self.tablemenu = self.menuBar().addMenu("&Tables")
         for act in self.tblact:
             self.tablemenu.addAction(self.tblact[act])
+
+        # self.custom_forms_menu = self.menuBar().addMenu("&Custom Forms")
+        # self.custom_forms_menu.addAction(self.form1_action)
 
         self.menuBar().addSeparator()
 
