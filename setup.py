@@ -10,10 +10,6 @@ if sys.hexversion < 0x3040000:
     exit(1)
 
 
-# with open("README.md", "rt") as f:
-#     readme = f.read()
-
-
 setup(name='sofos',
       version='0.9.1',
       description='Create Easily Gui Database Applications',
