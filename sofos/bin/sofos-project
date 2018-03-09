@@ -19,6 +19,13 @@ def main():
     # Create destination directory if not exists
     if not os.path.exists(indir):
         os.mkdir(indir)
+    # Create uforms directory if not exists
+    uforms_path = os.path.join(indir, 'zforms')
+    if not os.path.exists(uforms_path):
+        os.mkdir(uforms_path)
+        init_py = os.path.join(uforms_path, '__init__.py')
+        with open(init_py, 'w'):
+            pass
     # Copy files
     for fnam in os.listdir(TEMPLATE_PATH):
         # If fnam is a directory do nothing

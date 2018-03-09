@@ -651,24 +651,12 @@ class AutoFormTable(Qw.QDialog):
         return tbl
 
     def _delete_record(self):
-        """Todo:
-        1. Add verification message
-        2. Add checks before delete concerning referencial integrity
-        """
-        # success, msg = self.model.delete(self.id)
-        is_in_relation = self.model.__database__.integrity(
-            self.model.table_name(), self.id)
-        if not is_in_relation:
-            success, msg = self.model.delete(self.id)
-            if success:
-                self._populate()
-            else:
-                return False, msg
+        """Delete Record"""
+        success, msg = self.model.delete(self.id)
+        if success:
+            self._populate()
         else:
-            Qw.QMessageBox.critical(
-                self,
-                "Delete is not allowed",
-                "Record exists in relation")
+            Qw.QMessageBox.critical(self, "Delete Error", msg)
 
     def _intItem(self, num):
         item = Qw.QTableWidgetItem()

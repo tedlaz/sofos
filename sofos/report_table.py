@@ -44,6 +44,8 @@ margin-right: 3cm;
 </table>
 </html>
 """
+
+
 ttr1 = "    <tr>%s</tr>\n"
 ttr2 = "    <tr>%s</tr>"
 

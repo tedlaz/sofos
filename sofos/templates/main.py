@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
 import os
+import importlib
+import pkgutil
 from datetime import datetime
 import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
@@ -10,10 +12,24 @@ from sofos import qt
 from sofos import database
 from settings import setup
 import models as md
+import zforms
 # from forms import Form1
 qt.CONFIRMATIONS = setup['confirmations']
 BDIR = os.path.dirname(md.__file__)
 INIT_DB = os.path.join(BDIR, 'init_db.sql')
+
+
+def get_modules():
+    form_path = os.path.dirname(zforms.__file__)
+    form_names = [name for _, name, _ in pkgutil.iter_modules([form_path])]
+    modules = {}
+    for form in form_names:
+        my_module = importlib.import_module('zforms.%s' % form)
+        try:
+            modules[my_module.NAME]= my_module
+        except AttributeError as err:
+            print(err)
+    return modules
 
 
 class MainWindow(Qw.QMainWindow):
@@ -73,14 +89,20 @@ class MainWindow(Qw.QMainWindow):
     def update_dbf(self, dbf):
         if not dbf:
             self.tablemenu.setEnabled(False)
+            for menu in self.ufmenu.values():
+                menu.setEnabled(False)
         elif not self.database.set_database(dbf):
             Qw.QMessageBox.critical(
                 self,
                 "Πρόβλημα",
                 "Η βάση δεδομένων %s δεν είναι συμβατή" % dbf)
             self.tablemenu.setEnabled(False)
+            for menu in self.ufmenu.values():
+                menu.setEnabled(False)
         else:
             self.tablemenu.setEnabled(True)
+            for menu in self.ufmenu.values():
+                menu.setEnabled(True)
             self.setWindowTitle('%s %s' % (setup['application_title'], dbf))
 
     def open(self):
@@ -141,19 +163,13 @@ class MainWindow(Qw.QMainWindow):
     def backup(self):
         tim = datetime.now().isoformat()
         tsr = tim.replace('-', '').replace('T', '').replace(':', '')[:12]
-        filename = '%s.%s.sql' % (self.dbf, tsr)
-        success, msg = cd.backup_database(self.dbf, filename)
+        filename = '%s.%s.sql' % (self.database.dbf, tsr)
+        success, msg = self.database.backup_database()
         if success:
-            Qw.QMessageBox.information(
-                self,
-                'Database Backup',
-                msg)
+            Qw.QMessageBox.information(self, 'Database Backup', msg)
         else:
             os.remove(filename)
-            Qw.QMessageBox.critical(
-                self,
-                'Database Backup Error',
-                str(msg))
+            Qw.QMessageBox.critical(self, 'Database Backup Error', str(msg))
 
     def createActions(self):
         self.newAct = Qw.QAction(
@@ -237,13 +253,7 @@ class MainWindow(Qw.QMainWindow):
             self,
             statusTip="Show the Qt library's About box",
             triggered=Qw.QApplication.instance().aboutQt)
-
-        # self.form1_action = Qw.QAction(
-        #     "Form1",
-        #     self,
-        #     statusTip="Open form1",
-        #     triggered=self.open_form1)
-
+        # Autoform actions here
         self.tblact = {}
         self.mapper = {}
         for tbl, lbl in self.database.table_labels(True).items():
@@ -253,11 +263,23 @@ class MainWindow(Qw.QMainWindow):
             self.mapper[tbl].setMapping(self.tblact[tbl], tbl)
             self.tblact[tbl].triggered.connect(self.mapper[tbl].map)
             self.mapper[tbl].mapped['QString'].connect(self.createAutoFormTbl)
+        # uforms actions here
+        self.ufactions = {}
+        self.ufactionm = {}
+        self.ufmodules = get_modules()
+        for mnam, module in self.ufmodules.items():
+            self.ufactionm[mnam] = Qc.QSignalMapper(self)
+            self.ufactions[mnam] = Qw.QAction(module.TITLE, self)
+            self.ufactions[mnam].setStatusTip('open %s' % module.TITLE)
+            self.ufactionm[mnam].setMapping(self.ufactions[mnam], mnam)
+            self.ufactions[mnam].triggered.connect(self.ufactionm[mnam].map)
+            self.ufactionm[mnam].mapped['QString'].connect(self.create_uform)
+            self.ufactions[mnam].menu = module.MENU
 
-    # def open_form1(self):
-    #     child = Form1(self.database.table_object('erg'), parent=self)
-    #     self.mdiArea.addSubWindow(child)
-    #     child.show()
+    def create_uform(self, mnam):
+        uform = self.ufmodules[mnam].UForm(self.database)
+        self.mdiArea.addSubWindow(uform)
+        uform.show()
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
@@ -268,20 +290,21 @@ class MainWindow(Qw.QMainWindow):
         # action.triggered.connect(self.switchLayoutDirection)
         self.fileMenu.addAction(self.backupAct)
         self.fileMenu.addAction(self.exitAct)
-
         self.windowMenu = self.menuBar().addMenu("&Window")
         self.updateWindowMenu()
         self.windowMenu.aboutToShow.connect(self.updateWindowMenu)
-
         self.tablemenu = self.menuBar().addMenu("&Tables")
         for act in self.tblact:
             self.tablemenu.addAction(self.tblact[act])
-
+        self.ufmenu = {}
+        # self.menuBar().addMenu("&UFActions")
+        for ufact in self.ufactions.values():
+            if ufact.menu not in self.ufmenu:
+                self.ufmenu[ufact.menu] = self.menuBar().addMenu(ufact.menu)
+            self.ufmenu[ufact.menu].addAction(ufact)
         # self.custom_forms_menu = self.menuBar().addMenu("&Custom Forms")
         # self.custom_forms_menu.addAction(self.form1_action)
-
         self.menuBar().addSeparator()
-
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction(self.aboutAct)
         self.helpMenu.addAction(self.aboutQtAct)

@@ -349,8 +349,13 @@ class Model():
 
     @classmethod
     def delete(cls, idv):
-        sql = "DELETE FROM %s WHERE id='%s';" % (cls.table_name(), idv)
-        return df.delete(cls.__dbf__, sql)
+        # Delete here ...
+        is_in_relation = cls.__database__.integrity(cls.table_name(), idv)
+        if not is_in_relation:
+            sql = "DELETE FROM %s WHERE id='%s';" % (cls.table_name(), idv)
+            return df.delete(cls.__dbf__, sql)
+        else:
+            return False, 'Record exists in relation'
 
     @classmethod
     def select_all(cls):
