@@ -31,11 +31,10 @@ class Field():
 
         :return: sql
         """
-        typ = self.typos
         null = '' if self.null else 'NOT NULL'
         unique = 'UNIQUE' if self.unique else ''
         defau = 'DEFAULT %s' % self.default if self.default is not None else ''
-        tsq = '%s %s' % (field, typ)
+        tsq = '%s %s' % (field, self.typos)
         tsq += ' %s' % null if null != '' else ''
         tsq += ' %s' % unique if unique != '' else ''
         tsq += ' %s' % defau if defau != '' else ''
@@ -182,7 +181,7 @@ class ForeignKey(Field):
 
 
 class Model():
-    """This class represents table. Most of the time it is used as meta class
+    """This class represents table. Mostly it is used as a meta class
     """
     __dbf__ = None
 
@@ -311,22 +310,6 @@ class Model():
         return {'sql': sql, 'labels': label_list, 'cols': field_list,
                 'qt_widgets_types': qt_widget_list, 'colnum': len(field_list)}
 
-    # @classmethod
-    # def deep_fields(cls, lfields=None, llabels=None, lqtwids=None):
-    #     """Not finished yet"""
-    #     table_name = cls.__name__.lower()
-    #     table_flds = cls.fields()
-    #     lfields = lfields or ['%s.id' % table_name]
-    #     llabels = llabels or ['Νο']
-    #     lqtwids = lqtwids or ['int']
-    #     ljoins = []
-    #     for field in table_flds:
-    #         obj_field = getattr(cls, field)
-    #         if obj_field.__class__.__name__ == 'ForeignKey':
-    #             fk_table = obj_field.ftable.table_name()
-    #             if obj_field.null:
-    #                 pass
-
     @classmethod
     def save(cls, dva):
         """Save Data dictionary dva to database
@@ -439,7 +422,7 @@ class Model():
     @classmethod
     def search_by_id_deep(cls, idv):
         """Search for a specific record by id deep. Deep means that it returns
-           every data from every parent table it finds.
+           actual data deep down the parent table hierarchy.
 
         :param dbf: Database file
         :param idv: the id to find

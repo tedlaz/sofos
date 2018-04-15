@@ -790,9 +790,12 @@ class TTextButton(Qw.QWidget):
 
     def _set_state(self, state):
         self._state = state
-        sred = 'background-color: rgba(239, 41, 41);'
-        sgreen = 'background-color: rgba(0, 180, 0);'
-        self.button.setStyleSheet(sred if state == 0 else sgreen)
+        bred = 'background-color: rgba(243, 206, 206);'
+        bgreen = 'background-color: rgba(227, 253, 219);'
+        # sred = 'color: rgba(239, 41, 41);'
+        # sgreen = 'color: rgba(0, 180, 0);'
+        # self.button.setStyleSheet(sred if state == 0 else sgreen)
+        self.text.setStyleSheet(bred if state == 0 else bgreen)
 
     def _text_changed(self):
         self._set_state(0 if self.txt_initial != self.text.text() else 1)
