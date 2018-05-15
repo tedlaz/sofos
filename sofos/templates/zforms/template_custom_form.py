@@ -1,7 +1,7 @@
 """Template form"""
 import PyQt5.QtWidgets as Qw
 import PyQt5.QtCore as Qc
-import PyQt5.QtGui as Qg
+# import PyQt5.QtGui as Qg
 NAME = 'test1'
 MENU = 'Custom Forms'
 TITLE = 'Template custom form'
