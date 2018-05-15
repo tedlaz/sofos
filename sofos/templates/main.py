@@ -26,7 +26,7 @@ def get_modules():
     for form in form_names:
         my_module = importlib.import_module('zforms.%s' % form)
         try:
-            modules[my_module.NAME]= my_module
+            modules[my_module.NAME] = my_module
         except AttributeError as err:
             print(err)
     return modules
@@ -159,6 +159,12 @@ class MainWindow(Qw.QMainWindow):
         child = qt.AutoFormTable(self.database.table_object(table))
         self.mdiArea.addSubWindow(child)
         child.show()
+
+    def refresh_forms(self):
+        for window in self.mdiArea.subWindowList():
+            form = window.widget()
+            if hasattr(form, '_populate'):
+                form._populate()
 
     def backup(self):
         tim = datetime.now().isoformat()

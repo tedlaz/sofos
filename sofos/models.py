@@ -255,13 +255,13 @@ class Model():
         _sq = "CREATE TABLE IF NOT EXISTS %s(\n" % cls.table_name()
         _sq += "id INTEGER PRIMARY KEY,\n"
         sq_ = "\n);\n\n"
-        sqf = []
+        sql_fields = []
         u_fields = cls._unique_together()
         uniq = ',\nUNIQUE (%s)' % ','.join(u_fields) if u_fields else ''
         for field in cls.field_names():
             cfield = getattr(cls, field)
-            sqf.append(cfield.sql(field))
-        return _sq + ',\n'.join(sqf) + uniq + sq_
+            sql_fields.append(cfield.sql(field))
+        return _sq + ',\n'.join(sql_fields) + uniq + sq_
 
     @classmethod
     def sql_select(cls):

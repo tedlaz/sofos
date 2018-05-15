@@ -452,6 +452,8 @@ class TComboDB(Qw.QComboBox):
 
 
 class AutoForm(Qw.QDialog):
+    val_updated = Qc.pyqtSignal(str)
+
     def __init__(self, model, idv=None, parent=None):
         super().__init__(parent)
         self.setAttribute(Qc.Qt.WA_DeleteOnClose)
@@ -523,6 +525,7 @@ class AutoForm(Qw.QDialog):
                 msg = 'New record saved with Νο: %s' % lid
             else:
                 msg = 'Record Νο: %s updated' % data['id']
+                self.val_updated.emit('%s' % data['id'])
             if CONFIRMATIONS:
                 Qw.QMessageBox.information(self, "Save", msg)
             self.accept()
@@ -602,7 +605,12 @@ class AutoFormTable(Qw.QDialog):
         return self.tbl.item(self.tbl.currentRow(), 0).text()
 
     def _edit_record(self):
+        if not hasattr(self, 'id'):
+            return False
         dialog = AutoForm(self.model, self.id, parent=self)
+        main_window = self.parent().parent().parent().parent()
+        if hasattr(main_window, 'refresh_forms'):
+            dialog.val_updated.connect(main_window.refresh_forms)
         if dialog.exec_() == Qw.QDialog.Accepted:
             self._populate()
         else:
@@ -807,6 +815,8 @@ class TTextButton(Qw.QWidget):
         if ffind.exec_() == Qw.QDialog.Accepted:
             self.set(ffind.id)
         else:
+            if not self.text.text():
+                return
             self._set_state(1 if self.txt_initial == self.text.text() else 0)
 
     def keyPressEvent(self, ev):
