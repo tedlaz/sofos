@@ -18,6 +18,10 @@ class Database():
         self.models = models
         self.dbf = dbf if self.set_database(dbf) else None
 
+    @property
+    def is_connected(self):
+        return True if self.dbf else False
+
     def integrity_dict(self):
         """Integrity dictionary
 
@@ -34,13 +38,13 @@ class Database():
                     in_dic[parent][child] = field
         return in_dic
 
-    def integrity(self, parent_table, idv):
+    def integrity(self, parent_table, id_value):
         idict = self.integrity_dict()
         if parent_table not in idict:
             return False
         else:
             for child, field in idict[parent_table].items():
-                if dbi.ref_exists(self.dbf, child, field, idv):
+                if dbi.ref_exists(self.dbf, child, field, id_value):
                     return True
         return False
 
@@ -58,13 +62,13 @@ class Database():
             return True
         return False
 
-    def create_database(self, dbf, init_db=None):
+    def create_database(self, dbf, init_db_file=None):
         """Create tables from model definitions
 
         :param dbf: Database filename
         :param models: The models module to use (Normally models.py in your
             application's root)
-        :param init_db: The init_db.sql file to use if present
+        :param init_db_file: The init_db_file.sql file to use if present
         """
         msg = ''
         success, info = dbi.script(
@@ -75,8 +79,8 @@ class Database():
             self.dbf = dbf
             msg = 'Database %s created successfuly' % (dbf)
         success2, info2 = True, ''
-        if init_db and os.path.isfile(init_db):
-            with open(init_db) as file:
+        if init_db_file and os.path.isfile(init_db_file):
+            with open(init_db_file) as file:
                 success2, info2 = dbi.script(dbf, file.read())
             if success2:
                 msg += '\ninitial data inserted successfuly'

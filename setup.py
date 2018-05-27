@@ -11,14 +11,14 @@ if sys.hexversion < 0x3040000:
 
 
 setup(name='sofos',
-      version='0.9.3',
+      version='0.9.4',
       description='Create Easily Gui Database Applications',
       long_description='',
       url='https://github.com/tedlaz/sofos',
       keywords=["database", "gui", "pyqt5"],
       author='Ted Lazaros',
       author_email='tedlaz@gmail.com',
-      install_requires=['PyQt5'],
+      install_requires=['PyQt5', 'PyYAML'],
       license='GPLv3',
       packages=['sofos'],
       scripts=['sofos/bin/sofos-project'],

@@ -171,6 +171,7 @@ class Paroysies(models.Model):
     class Meta:
         unique_together = ('xri', 'mon')
         table_label = "Παρουσίες"
+        table_child_name = "ParousiesDetails"
 
 
 class ParoysiaType(models.Model):
@@ -282,7 +283,7 @@ class TransDetails(models.Model):
     accn = models.ForeignKey(Account, 'Λογαριασμός')
     dper = models.CharField('Περιγραφή', max_length=30)
     xre = models.DecimalField('Χρέωση')
-    pis =  models.DecimalField('Πίστωση')
+    pis = models.DecimalField('Πίστωση')
 
     class Meta:
         table_label = 'Εγγραφή'

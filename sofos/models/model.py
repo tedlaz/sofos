@@ -1,183 +1,10 @@
 """Module Models
 """
-import hashlib
-from . import gr
-from . import dbf as df
+from .. import gr
+from .. import dbf as df
 IGNORE = 'models'  # For final models file
 QTW = ['int', 'text_button', 'combo', 'check_box', 'date', 'date_or_empty',
        'num', 'text_num', 'text', 'week_days', 'str']
-
-
-class Field():
-    """This is the base class of all field classes
-    """
-    typos = ''
-    fkey = False
-
-    def __init__(self, label='', null=False, unique=False, default=None,
-                 qt_widget='str'):
-        self.label = label
-        self.null = null
-        self.unique = unique
-        self.default = default
-        self.qt_widget = qt_widget
-        self.min_length = 0
-        self.max_length = 0
-
-    def sql(self, field):
-        """sql create for field
-
-        :param field: field name
-
-        :return: sql
-        """
-        null = '' if self.null else 'NOT NULL'
-        unique = 'UNIQUE' if self.unique else ''
-        defau = 'DEFAULT %s' % self.default if self.default is not None else ''
-        tsq = '%s %s' % (field, self.typos)
-        tsq += ' %s' % null if null != '' else ''
-        tsq += ' %s' % unique if unique != '' else ''
-        tsq += ' %s' % defau if defau != '' else ''
-        return tsq
-
-    def validate(self, value):
-        lval = len(value)
-        if lval < self.min_length or lval > self.max_length:
-            return False
-        return True
-
-
-class BooleanField(Field):
-    """Boolean field"""
-    typos = 'BOOLEAN'
-
-    def __init__(self, label, null=False, unique=False):
-        super().__init__(label, null, unique, qt_widget='check_box')
-        self.min_length = 0
-        self.max_length = 1
-
-
-class CharField(Field):
-    """char field """
-    typos = 'TEXT'
-
-    def __init__(self, label, max_length, null=False, unique=False,
-                 min_length=0):
-        super().__init__(label, null, unique, qt_widget='str')
-        self.min_length = min_length
-        self.max_length = max_length
-
-
-class CharNumField(Field):
-    """Strings that take numeric values only (tax numbers, phones , etc)"""
-    typos = 'TEXT'
-
-    def __init__(self, label, max_length, null=False, unique=False,
-                 min_length=0):
-        super().__init__(label, null, unique, qt_widget='text_num')
-        self.min_length = min_length
-        self.max_length = max_length
-
-    def validate(self, value):
-        if not gr.is_positive_integer(value):
-            return False
-        return super().validate(value)
-
-
-class TextField(Field):
-    """Long text fields"""
-    typos = 'TEXT'
-
-    def __init__(self, label, max_length=256, null=False, unique=False,
-                 min_length=0):
-        super().__init__(label, null, unique, qt_widget='text')
-        self.min_length = min_length
-        self.max_length = max_length
-
-
-class DateField(Field):
-    """Date fields"""
-    typos = 'DATE'
-
-    def __init__(self, label, null=False, unique=False):
-        super().__init__(label, null, unique, qt_widget='date')
-
-    def validate(self, value):
-        return gr.is_iso_date(value)
-
-
-class DateEmptyField(Field):
-    """Date or empty fields"""
-    typos = 'DATETIME'
-
-    def __init__(self, label, null=False, unique=False):
-        super().__init__(label, null, unique, qt_widget='date_or_empty')
-
-    def validate(self, value):
-        if value is None or value == '':
-            return True
-        return gr.is_iso_date(value)
-
-
-class IntegerField(Field):
-    """Integer fields"""
-    typos = 'INTEGER'
-
-    def __init__(self, label='', null=False, unique=False, default=0):
-        super().__init__(label, null, unique, default=default, qt_widget='int')
-
-    def validate(self, value):
-        return gr.is_integer(value)
-
-
-class DecimalField(Field):
-    """Decimal fields"""
-    typos = 'DECIMAL'
-
-    def __init__(self, label='', null=False, unique=False, default=0):
-        super().__init__(label, null, unique, default=default, qt_widget='num')
-
-    def validate(self, value):
-        return gr.isNum(value)
-
-
-class WeekdaysField(Field):
-    """Weekdays special fields"""
-    typos = 'TEXT'
-
-    def __init__(self, label, max_length=30, null=False, unique=False,
-                 min_length=0):
-        super().__init__(label, null, unique, qt_widget='week_days')
-        self.min_length = min_length
-        self.max_length = max_length
-
-    def validate(self, value):
-        return gr.is_weekdays(value)
-
-
-class ForeignKey(Field):
-    """Foreign key fields"""
-    typos = 'INTEGER'
-    fkey = True
-
-    def __init__(self, ftable, label, qt_widget='text_button',
-                 null=False, unique=False, default=None):
-        super().__init__(label, null, unique, qt_widget=qt_widget,
-                         default=default)
-        self.ftable = ftable
-
-    def sql(self, field):
-        null = '' if self.null else 'NOT NULL'
-        unique = 'UNIQUE' if self.unique else ''
-        tsq = '%s INTEGER' % field
-        tsq += ' %s' % null if null != '' else ''
-        tsq += ' %s' % unique if unique != '' else ''
-        tsq += ' REFERENCES %s(id)' % self.ftable.__name__.lower()
-        return tsq
-
-    def validate(self, value):
-        """Value must always be integer"""
-        return gr.is_integer(value)
 
 
 class Model():
@@ -198,6 +25,15 @@ class Model():
             if hasattr(meta, 'table_label'):
                 return cls.Meta.table_label
         return cls.__name__
+
+    @classmethod
+    def table_child_name(cls):
+        """If table has child table return child table name"""
+        if 'Meta' in cls.__dict__.keys():
+            meta = getattr(cls, 'Meta')
+            if hasattr(meta, 'table_child_name'):
+                return cls.Meta.table_child_name.lower()
+        return ''
 
     @classmethod
     def field_object(cls, field_name):
@@ -283,7 +119,7 @@ class Model():
         """
         table_name = cls.__name__.lower()
         sqt = "SELECT %s\nFROM %s\n%s"
-        flds = cls.repr_fields()
+        flds = cls.repr_fields()  # flds = cls.field_names()
         fld_dic = {table_name: []}
         field_list = field_list or ['%s.id' % table_name]
         label_list = label_list or ['ΑΑ']
@@ -329,6 +165,19 @@ class Model():
             sts = ', '.join(["%s='%s'" % (i, j) for i, j in dva.items()])
             sql = sqt % (cls.table_name(), sts, dva['id'])
         return df.save(cls.__dbf__, sql)
+
+    @classmethod
+    def validate(cls, dic_data):
+        errors = []
+        validated = True
+        if not cls.__dbf__:
+            return False, 'No Database connection'
+        for fldname, fldobj in cls.field_objects().items():
+            valresult, msg = fldobj.validate(dic_data[fldname])
+            if not valresult:
+                errors.append('%s->%s' % (fldname, msg))
+                validated = False
+        return validated, errors
 
     @classmethod
     def delete(cls, idv):
@@ -434,3 +283,54 @@ class Model():
         sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
         _, record = df.read(cls.__dbf__, sql, 'one')
         return record
+
+    @classmethod
+    def sql_select_ful_deep(cls, field_list=None, label_list=None,
+                            qt_widget_list=None, joins=None):
+        """Returns sql with all relations of table
+
+        :param dbf: Database file
+        :param field_list: A list of fields (for recursion)
+        :param label_list: A list of labels (for recursion)
+        :param qt_widget_list: A list of qt_widgets (for recursion)
+        :param joins: A list of joins (for recursion)
+        """
+        table_name = cls.__name__.lower()
+        sqt = "SELECT %s\nFROM %s\n%s"
+        flds = cls.field_names()
+        fld_dic = {table_name: []}
+        field_list = field_list or ['%s.id' % table_name]
+        label_list = label_list or ['ΑΑ']
+        qt_widget_list = qt_widget_list or ['int']
+        joins = joins or []
+        for fld in flds:
+            object_fld = getattr(cls, fld)
+            if object_fld.__class__.__name__ == 'ForeignKey':
+                ftbl = object_fld.ftable.table_name()
+                if object_fld.null:
+                    intl = 'LEFT JOIN %s ON %s.id=%s.%s'
+                else:
+                    intl = 'INNER JOIN %s ON %s.id=%s.%s'
+                joins.append(intl % (ftbl, ftbl, table_name, fld))
+                fld_dic[table_name].append(
+                    object_fld.ftable.sql_select_all_deep(
+                        field_list, label_list, qt_widget_list, joins))
+            else:
+                fld_dic[table_name].append('%s.%s' % (table_name, fld))
+                field_list.append('%s.%s' % (table_name, fld))
+                label_list.append(object_fld.label)
+                qt_widget_list.append(object_fld.qt_widget)
+        sql = sqt % (', '.join(field_list), table_name, '\n'.join(joins))
+        return {'sql': sql, 'labels': label_list, 'cols': field_list,
+                'qt_widgets_types': qt_widget_list, 'colnum': len(field_list)}
+
+    @classmethod
+    def select_ful_deep(cls):
+        """Deep select all"""
+        if not cls.__dbf__:
+            return False, 'No Database connection'
+        metadata = cls.sql_select_ful_deep()
+        _, rows = df.read(cls.__dbf__, metadata['sql'], 'rows')
+        metadata['rows'] = rows
+        metadata['rownum'] = len(rows)
+        return metadata

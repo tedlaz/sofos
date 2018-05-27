@@ -157,6 +157,7 @@ class MainWindow(Qw.QMainWindow):
 
     def createAutoFormTbl(self, table):
         child = qt.AutoFormTable(self.database.table_object(table))
+        # child = qt.AutoFormTableWidget(self.database.table_object(table))
         self.mdiArea.addSubWindow(child)
         child.show()
 
@@ -335,6 +336,7 @@ class MainWindow(Qw.QMainWindow):
         self.settings.setValue('dbf', self.database.dbf)
         self.settings.setValue('pos', self.pos())
         self.settings.setValue('size', self.size())
+        # self.settings.setValue("editor/wrapMargin", 68)
 
     def activeMdiChild(self):
         activeSubWindow = self.mdiArea.activeSubWindow()
