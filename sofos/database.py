@@ -16,6 +16,7 @@ class Database():
         :param dbf: database file
         """
         self.models = models
+        self.inte_dic = {}
         self.dbf = dbf if self.set_database(dbf) else None
 
     @property
@@ -27,16 +28,17 @@ class Database():
 
         :return: Dictionary {parent1: {child1: fld1, child2: fld2, ...}, ...}
         """
-        in_dic = {}
+        if self.inte_dic != {}:
+            return self.inte_dic
         for table_name, table_object in self.table_objects().items():
             for fld_name, fld_obj in table_object.field_objects().items():
                 if fld_obj.fkey:
                     parent = fld_obj.ftable.table_name()
                     child = table_name
                     field = fld_name
-                    in_dic[parent] = in_dic.get(parent, {})
-                    in_dic[parent][child] = field
-        return in_dic
+                    self.inte_dic[parent] = self.inte_dic.get(parent, {})
+                    self.inte_dic[parent][child] = field
+        return self.inte_dic
 
     def integrity(self, parent_table, id_value):
         idict = self.integrity_dict()
@@ -78,10 +80,10 @@ class Database():
         else:
             self.dbf = dbf
             msg = 'Database %s created successfuly' % (dbf)
-        success2, info2 = True, ''
+        success2 = True
         if init_db_file and os.path.isfile(init_db_file):
             with open(init_db_file) as file:
-                success2, info2 = dbi.script(dbf, file.read())
+                success2, _ = dbi.script(dbf, file.read())
             if success2:
                 msg += '\ninitial data inserted successfuly'
             else:

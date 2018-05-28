@@ -14,8 +14,12 @@ class TComboDB(Qw.QComboBox):
         return self.index2id[self.currentIndex()]
 
     def set(self, id_):
+        """Dangerus if id_ out of index"""
         if id_:
-            self.setCurrentIndex(self.id2index[int(id_)])
+            try:
+                self.setCurrentIndex(self.id2index[int(id_)])
+            except KeyError:
+                pass
 
     def populate(self):
         """

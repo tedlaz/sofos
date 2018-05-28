@@ -10,6 +10,7 @@ class AutoFormTable(Qw.QDialog):
     def __init__(self, model, parent=None):
         super().__init__(parent)
         # self.setAttribute(Qc.Qt.WA_DeleteOnClose)
+        self.settings = Qc.QSettings()
         self._fld_action = {}
         self.resize(550, 400)
         self.model = model
@@ -17,6 +18,7 @@ class AutoFormTable(Qw.QDialog):
         self._create_gui()
         self._make_connections()
         self._populate()
+        self._hide_cols()
 
     def _wtitle(self):
         self.setWindowTitle('{}'.format(self.model.table_label()))
@@ -111,22 +113,46 @@ class AutoFormTable(Qw.QDialog):
         deleteAction = Qw.QAction("Delete", self)
         deleteAction.triggered.connect(self._delete_record)
         tbl.addAction(deleteAction)
+        tbl.horizontalHeader().setContextMenuPolicy(Qc.Qt.ActionsContextMenu)
         vfd = self.model.sql_select_ful_deep()
         lbls, cols = vfd['labels'], vfd['cols']
+        keyv = "Forms/%s" % self.model.table_name()
+        keyvset = self.settings.value(keyv, defaultValue=None)
         for i, col in enumerate(cols):
             self._fld_action[col] = Qw.QAction(lbls[i], self)
             self._fld_action[col].setCheckable(True)
-            self._fld_action[col].setChecked(True)
+            if keyvset:
+                bval = keyvset.get(col, True)
+            else:
+                bval = True
+            self._fld_action[col].setChecked(bval)
             self._fld_action[col].triggered.connect(self._toggle_flds)
-            tbl.addAction(self._fld_action[col])
+            tbl.horizontalHeader().addAction(self._fld_action[col])
+        tbl.viewport().update()
         return tbl
 
-    def _toggle_flds(self):
+    def _hide_cols(self):
         for i, fldaction in enumerate(self._fld_action.keys()):
             if self._fld_action[fldaction].isChecked():
                 self.tbl.setColumnHidden(i, False)
             else:
                 self.tbl.setColumnHidden(i, True)
+        self.tbl.resizeColumnsToContents()
+
+    def _toggle_flds(self):
+        vls = {}
+        for i, fldaction in enumerate(self._fld_action.keys()):
+            if self._fld_action[fldaction].isChecked():
+                self.tbl.setColumnHidden(i, False)
+                vls[fldaction] = True
+            else:
+                self.tbl.setColumnHidden(i, True)
+                vls[fldaction] = False
+        # print(self.model.table_name(), vls)
+        keyv = "Forms/%s" % self.model.table_name()
+        self.settings.setValue(keyv, vls)
+        # aaa = self.settings.value(keyv, defaultValue=None)
+        # print(aaa)
         self.tbl.resizeColumnsToContents()
 
     def _delete_record(self):

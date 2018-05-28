@@ -1,9 +1,10 @@
 from sofos import models
-
+import _validators
 
 # Create your models here !!
 # Following models are for test purposes only
 # Delete and replace with yours
+
 
 class Sex(models.Model):
     sex = models.CharField('Φύλο', max_length=10)
@@ -53,6 +54,8 @@ class Erg(models.Model):
                             qt_widget='combo')
     addr = models.CharField('Διεύθυνση', max_length=60)
     mobile = models.CharField('Κινητό τηλέφωνο', max_length=10)
+    # Add custom validators here
+    afm.add_validator(_validators.validate_afm)
 
     class Meta:
         unique_together = ['epo', 'ono']

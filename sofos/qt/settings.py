@@ -1,6 +1,6 @@
 import PyQt5.QtCore as Qc
 
-CONFIRMATIONS = True
+CONFIRMATIONS = False
 GRLOCALE = Qc.QLocale(Qc.QLocale.Greek, Qc.QLocale.Greece)
 MSG_RESET_DATE = u'Reset with right mouse click'
 MIN_HEIGHT = 30

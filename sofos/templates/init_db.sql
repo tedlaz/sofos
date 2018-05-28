@@ -52,4 +52,7 @@ INSERT INTO "taftotitatype" VALUES(2,'Διαβατήριο');
 INSERT INTO "xora" VALUES(1,'Ελλάδα');
 INSERT INTO "xrisi" VALUES(1,2017);
 INSERT INTO "xrisi" VALUES(2,2018);
+INSERT INTO "hmerologio" VALUES(1,'Ανοίγματος χρήσης');
+INSERT INTO "hmerologio" VALUES(2,'Γενικό ημερολόγιο');
+INSERT INTO "hmerologio" VALUES(3,'Κλεισίματος χρήσης');
 COMMIT;
