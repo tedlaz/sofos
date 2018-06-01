@@ -3,6 +3,7 @@ import sys
 import os
 import importlib
 import pkgutil
+import logging  # debug, info, warning, error, critical
 from datetime import datetime
 import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
@@ -158,7 +159,11 @@ class MainWindow(Qw.QMainWindow):
     def createAutoFormTbl(self, table):
         child = qt.AutoFormTable(self.database.table_object(table))
         # child = qt.AutoFormTableWidget(self.database.table_object(table))
+        keyv = "Forms/%ssiz" % table
+        size = self.settings.value(keyv, Qc.QSize(300, 240))
         self.mdiArea.addSubWindow(child)
+        child.parentWidget().resize(size)
+        child.parentWidget().updateGeometry()
         child.show()
 
     def refresh_forms(self):
@@ -363,6 +368,8 @@ class MainWindow(Qw.QMainWindow):
 
 
 def run():
+    # logging.basicConfig(filename='myapp.log', level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     app = Qw.QApplication(sys.argv)
     app.setOrganizationName(setup["organization_name"])
     app.setOrganizationDomain(setup["organization_domain"])

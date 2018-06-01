@@ -12,13 +12,16 @@ class AutoFormTable(Qw.QDialog):
         # self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self.settings = Qc.QSettings()
         self._fld_action = {}
-        self.resize(550, 400)
         self.model = model
         self._wtitle()
         self._create_gui()
         self._make_connections()
         self._populate()
         self._hide_cols()
+
+    def closeEvent(self, event):
+        keyv = "Forms/%ssiz" % self.model.table_name()
+        self.settings.setValue(keyv, self.size())
 
     def _wtitle(self):
         self.setWindowTitle('{}'.format(self.model.table_label()))

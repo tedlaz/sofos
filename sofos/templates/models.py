@@ -279,6 +279,8 @@ class Trans(models.Model):
 
     class Meta:
         table_label = 'Άρθρα'
+        table_detail = 'TransDetails'
+        table_detail_key = 'tran'
 
 
 class TransDetails(models.Model):

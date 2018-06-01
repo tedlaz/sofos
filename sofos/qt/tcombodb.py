@@ -1,4 +1,5 @@
 import PyQt5.QtWidgets as Qw
+import logging  # debug, info, warning, error, critical
 
 
 class TComboDB(Qw.QComboBox):
@@ -19,7 +20,7 @@ class TComboDB(Qw.QComboBox):
             try:
                 self.setCurrentIndex(self.id2index[int(id_)])
             except KeyError:
-                pass
+                logging.error('value %s is out of index', id_)
 
     def populate(self):
         """
