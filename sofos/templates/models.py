@@ -136,18 +136,50 @@ class Proslipsi(models.Model):
     eid = models.ForeignKey(Eidikotita, 'Ειδικότητα')
     syt = models.ForeignKey(SymbasiType, 'Τύπος σύμβασης',  default=1,
                             qt_widget='combo')
-    mer = models.WeekdaysField('Ημέρες εργασίας')
-    ora = models.TextField('Πρόγραμμα εργασίας')
+    ora = models.WeekdaysField('Πρόγραμμα εργασίας αρχικό')
     apt = models.ForeignKey(ApodoxesType, 'Τύπος αποδοχών',  default=1,
                             qt_widget='combo')
     amb = models.DecimalField('Αποδοχές')
-    dap = models.DateEmptyField('Ημ/νία απόλυσης')
+
+    class Meta:
+        table_label = 'Προσλήψεις'
+        repr_fields = ['epo', 'ono', 'dpr']
+
+
+class Apoxorisi(models.Model):
+    pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
+    dap = models.DateEmptyField('Ημ/νία αποχώρησης')
     apot = models.ForeignKey(ApoxorisiType, 'Τύπος απόχώρησης',
                              qt_widget='combo', null=True)
 
     class Meta:
-        table_label = 'Προσλήψεις'
-        repr_fields = ['erg', 'dpr']
+        table_label = 'Αποχωρήσεις'
+
+
+class MetaboliType(models.Model):
+    tdt = models.CharField('Τύπος μεταβολής', max_length=30, unique=True)
+
+    class Meta:
+        table_label = "Τύποι Μεταβολών"
+
+
+class Metaboles(models.Model):
+    pro = models.ForeignKey(Proslipsi, 'Πρόσληψη εργαζομένου')
+    typ = models.ForeignKey(MetaboliType, 'Τύπος μεταβολής')
+    apo = models.DateField('Ισχύς Από')
+    val = models.CharField('Τιμή', max_length=200)
+
+    class Meta:
+        table_label = "Μεταβολές"
+
+
+class AllagiProgramma(models.Model):
+    pro = models.ForeignKey(Proslipsi, 'Πρόσληψη εργαζομένου')
+    apo = models.DateField('Ισχύς Από')
+    ora = models.WeekdaysField('Πρόγραμμα εργασίας')
+
+    class Meta:
+        table_label = "Αλλαγή Προγράμματος"
 
 
 class Xrisi(models.Model):
@@ -292,3 +324,12 @@ class TransDetails(models.Model):
 
     class Meta:
         table_label = 'Εγγραφή'
+
+
+class Testduo(models.Model):
+    apo = models.ForeignKey(Account, 'Από')
+    sel = models.ForeignKey(Account, 'Σελμ')
+    poso = models.DecimalField('Ποσό')
+
+    class Meta:
+        table_label = 'Δοκιμή'

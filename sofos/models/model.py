@@ -118,30 +118,32 @@ class Model():
         :param joins: A list of joins (for recursion)
         """
         table_name = cls.__name__.lower()
-        sqt = "SELECT %s\nFROM %s\n%s"
-        flds = cls.repr_fields()  # flds = cls.field_names()
+        # flds = cls.repr_fields()
+        flds = cls.field_names()
         fld_dic = {table_name: []}
         field_list = field_list or ['%s.id' % table_name]
         label_list = label_list or ['ΑΑ']
         qt_widget_list = qt_widget_list or ['int']
         joins = joins or []
-        for fld in flds:
-            object_fld = getattr(cls, fld)
-            if object_fld.__class__.__name__ == 'ForeignKey':
-                ftbl = object_fld.ftable.table_name()
-                if object_fld.null:
+        for fld_name in flds:
+            field = cls.field_object(fld_name)
+            # if object_fld.__class__.__name__ == 'ForeignKey':
+            if field.is_foreign_key:
+                ftbl = field.ftable.table_name()
+                if field.null:
                     intl = 'LEFT JOIN %s ON %s.id=%s.%s'
                 else:
                     intl = 'INNER JOIN %s ON %s.id=%s.%s'
-                joins.append(intl % (ftbl, ftbl, table_name, fld))
+                joins.append(intl % (ftbl, ftbl, table_name, fld_name))
                 fld_dic[table_name].append(
-                    object_fld.ftable.sql_select_all_deep(
+                    field.ftable.sql_select_all_deep(
                         field_list, label_list, qt_widget_list, joins))
             else:
-                fld_dic[table_name].append('%s.%s' % (table_name, fld))
-                field_list.append('%s.%s' % (table_name, fld))
-                label_list.append(object_fld.label)
-                qt_widget_list.append(object_fld.qt_widget)
+                fld_dic[table_name].append('%s.%s' % (table_name, fld_name))
+                field_list.append('%s.%s' % (table_name, fld_name))
+                label_list.append(field.label)
+                qt_widget_list.append(field.qt_widget)
+        sqt = "SELECT %s\nFROM %s\n%s"
         sql = sqt % (', '.join(field_list), table_name, '\n'.join(joins))
         return {'sql': sql, 'labels': label_list, 'cols': field_list,
                 'qt_widgets_types': qt_widget_list, 'colnum': len(field_list)}
@@ -280,13 +282,15 @@ class Model():
         if not cls.__dbf__:
             return False, 'No Database connection'
         data = cls.sql_select_all_deep()
+        # data = cls.sql_select_ful_deep()
         sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
         _, record = df.read(cls.__dbf__, sql, 'one')
         return record
 
+    # For Deletion
     @classmethod
-    def sql_select_ful_deep(cls, field_list=None, label_list=None,
-                            qt_widget_list=None, joins=None):
+    def sql_select_ful_deep1(cls, field_list=None, label_list=None,
+                             qt_widget_list=None, joins=None):
         """Returns sql with all relations of table
 
         :param dbf: Database file
@@ -295,18 +299,19 @@ class Model():
         :param qt_widget_list: A list of qt_widgets (for recursion)
         :param joins: A list of joins (for recursion)
         """
-        table_name = cls.__name__.lower()
-        sqt = "SELECT %s\nFROM %s\n%s"
-        flds = cls.field_names()
+        table_name = cls.__name__.lower()  # όνομα πίνακα σε πεζά
+        flds = cls.field_names()  # [field1, field2, ...]
         fld_dic = {table_name: []}
-        field_list = field_list or ['%s.id' % table_name]
-        label_list = label_list or ['ΑΑ']
-        qt_widget_list = qt_widget_list or ['int']
+        # Recursive variables
+        field_list = field_list or ['%s.id' % table_name]  # Add id
+        label_list = label_list or ['ΑΑ']  # Add label for id
+        qt_widget_list = qt_widget_list or ['int']  # Add type for id
         joins = joins or []
+        # End Recursive variables
         for fld in flds:
             object_fld = getattr(cls, fld)
             if object_fld.__class__.__name__ == 'ForeignKey':
-                ftbl = object_fld.ftable.table_name()
+                ftbl = object_fld.ftable.table_name()  # Table name of fkey
                 if object_fld.null:
                     intl = 'LEFT JOIN %s ON %s.id=%s.%s'
                 else:
@@ -320,12 +325,14 @@ class Model():
                 field_list.append('%s.%s' % (table_name, fld))
                 label_list.append(object_fld.label)
                 qt_widget_list.append(object_fld.qt_widget)
+        sqt = "SELECT %s\nFROM %s\n%s"
         sql = sqt % (', '.join(field_list), table_name, '\n'.join(joins))
         return {'sql': sql, 'labels': label_list, 'cols': field_list,
                 'qt_widgets_types': qt_widget_list, 'colnum': len(field_list)}
 
+    # For Deletion
     @classmethod
-    def select_ful_deep(cls):
+    def select_ful_deep1(cls):
         """Deep select all"""
         if not cls.__dbf__:
             return False, 'No Database connection'

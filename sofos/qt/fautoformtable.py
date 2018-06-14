@@ -6,22 +6,67 @@ from .settings import WEEKDAYS_FULL
 from .vsortwidgetitem import SortWidgetItem
 
 
+class FieldsToView(Qw.QDialog):
+    def __init__(self, fldList, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Select Visible Fields')
+        self.layout = Qw.QVBoxLayout(self)
+        self.fields = fldList
+        self.fld_widgets = {}
+        for elm in fldList:
+            self.fld_widgets[elm[0]] = Qw.QCheckBox(elm[1])
+            self.fld_widgets[elm[0]].setChecked(elm[2])
+            self.layout.addWidget(self.fld_widgets[elm[0]])
+        btnlay = Qw.QHBoxLayout()
+        self.layout.addLayout(btnlay)
+        btn = Qw.QPushButton('ok')
+        bde = Qw.QPushButton('Set as Default')
+        btnlay.addWidget(bde)
+        btnlay.addWidget(btn)
+        bde.setFocusPolicy(Qc.Qt.NoFocus)
+        btn.clicked.connect(self.hide_columns)
+        bde.clicked.connect(self.save_as_default)
+
+    def update_sdict(self):
+        for elm in self.fld_widgets:
+            self.parent().sdict[elm] = self.fld_widgets[elm].isChecked()
+
+    def hide_columns(self):
+        self.update_sdict()
+        self.parent().hide_cols()
+        self.accept()
+
+    def save_as_default(self):
+        self.update_sdict()
+        self.parent().hide_cols()
+        self.parent().save_settings()
+        self.accept()
+
+
 class AutoFormTable(Qw.QDialog):
     def __init__(self, model, parent=None):
         super().__init__(parent)
         # self.setAttribute(Qc.Qt.WA_DeleteOnClose)
         self.settings = Qc.QSettings()
         self._fld_action = {}
+        self._fld_visible = {}
         self.model = model
+        self.sname = "VisibleFields/%s" % self.model.table_name()
+        self.sdict = self.settings.value(self.sname, defaultValue={})
         self._wtitle()
         self._create_gui()
         self._make_connections()
         self._populate()
-        self._hide_cols()
+        self.hide_cols()
 
     def closeEvent(self, event):
-        keyv = "Forms/%ssiz" % self.model.table_name()
-        self.settings.setValue(keyv, self.size())
+        keyv = "FormSize/%s" % self.model.table_name()
+        size = self.size()
+        xvl = self.geometry().x()
+        yvl = self.geometry().y()
+        size.setWidth(size.width() + xvl + xvl)
+        size.setHeight(size.height() + xvl + yvl)
+        self.settings.setValue(keyv, size)
 
     def _wtitle(self):
         self.setWindowTitle('{}'.format(self.model.table_label()))
@@ -77,7 +122,7 @@ class AutoFormTable(Qw.QDialog):
             return False
 
     def _get_data(self):
-        return self.model.select_ful_deep()
+        return self.model.select_all_deep()
 
     def _populate(self):
         data = self._get_data()
@@ -116,47 +161,30 @@ class AutoFormTable(Qw.QDialog):
         deleteAction = Qw.QAction("Delete", self)
         deleteAction.triggered.connect(self._delete_record)
         tbl.addAction(deleteAction)
-        tbl.horizontalHeader().setContextMenuPolicy(Qc.Qt.ActionsContextMenu)
-        vfd = self.model.sql_select_ful_deep()
-        lbls, cols = vfd['labels'], vfd['cols']
-        keyv = "Forms/%s" % self.model.table_name()
-        keyvset = self.settings.value(keyv, defaultValue=None)
-        for i, col in enumerate(cols):
-            self._fld_action[col] = Qw.QAction(lbls[i], self)
-            self._fld_action[col].setCheckable(True)
-            if keyvset:
-                bval = keyvset.get(col, True)
-            else:
-                bval = True
-            self._fld_action[col].setChecked(bval)
-            self._fld_action[col].triggered.connect(self._toggle_flds)
-            tbl.horizontalHeader().addAction(self._fld_action[col])
-        tbl.viewport().update()
+        tbl.horizontalHeader().setContextMenuPolicy(Qc.Qt.CustomContextMenu)
+        tbl.horizontalHeader().customContextMenuRequested.connect(self.fmen)
+        # tbl.viewport().update()
         return tbl
 
-    def _hide_cols(self):
-        for i, fldaction in enumerate(self._fld_action.keys()):
-            if self._fld_action[fldaction].isChecked():
-                self.tbl.setColumnHidden(i, False)
-            else:
-                self.tbl.setColumnHidden(i, True)
+    def fmen(self, position):
+        vfd = self.model.sql_select_all_deep()
+        lbls, cols = vfd['labels'], vfd['cols']
+        data = []
+        for i, col in enumerate(cols):
+            data.append([col, lbls[i], self.sdict.get(col, True)])
+        frm = FieldsToView(data, self)
+        frm.move(self.mapToGlobal(position))
+        frm.exec_()
+
+    def hide_cols(self):
+        vfd = self.model.sql_select_all_deep()
+        cols = vfd['cols']
+        for i, col in enumerate(cols):
+            self.tbl.setColumnHidden(i, not self.sdict.get(col, True))
         self.tbl.resizeColumnsToContents()
 
-    def _toggle_flds(self):
-        vls = {}
-        for i, fldaction in enumerate(self._fld_action.keys()):
-            if self._fld_action[fldaction].isChecked():
-                self.tbl.setColumnHidden(i, False)
-                vls[fldaction] = True
-            else:
-                self.tbl.setColumnHidden(i, True)
-                vls[fldaction] = False
-        # print(self.model.table_name(), vls)
-        keyv = "Forms/%s" % self.model.table_name()
-        self.settings.setValue(keyv, vls)
-        # aaa = self.settings.value(keyv, defaultValue=None)
-        # print(aaa)
-        self.tbl.resizeColumnsToContents()
+    def save_settings(self):
+        self.settings.setValue(self.sname, self.sdict)
 
     def _delete_record(self):
         """Delete Record"""
@@ -186,12 +214,11 @@ class AutoFormTable(Qw.QDialog):
 
     def _weekdayItem(self, strv):
         weekdays_list = eval(strv)
-        weekdays_string_list = []
+        items = []
         for i, wday in enumerate(weekdays_list):
-            if wday != 0:
-                weekdays_string_list.append(WEEKDAYS_FULL[i])
-        item = Qw.QTableWidgetItem(', '.join(weekdays_string_list))
-        return item
+            if wday != '':
+                items.append('%s(%s)' % (WEEKDAYS_FULL[i], wday))
+        return Qw.QTableWidgetItem(', '.join(items))
 
     def table_label(self):
         return self.model.table_label()

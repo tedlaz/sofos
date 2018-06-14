@@ -8,12 +8,12 @@ from datetime import datetime
 import PyQt5.QtCore as Qc
 import PyQt5.QtGui as Qg
 import PyQt5.QtWidgets as Qw
-import main_rc
 from sofos import qt
 from sofos import database
 from settings import setup
 import models as md
 import zforms
+import main_rc
 # from forms import Form1
 qt.CONFIRMATIONS = setup['confirmations']
 BDIR = os.path.dirname(md.__file__)
@@ -159,11 +159,11 @@ class MainWindow(Qw.QMainWindow):
     def createAutoFormTbl(self, table):
         child = qt.AutoFormTable(self.database.table_object(table))
         # child = qt.AutoFormTableWidget(self.database.table_object(table))
-        keyv = "Forms/%ssiz" % table
+        keyv = "FormSize/%s" % table
         size = self.settings.value(keyv, Qc.QSize(300, 240))
         self.mdiArea.addSubWindow(child)
         child.parentWidget().resize(size)
-        child.parentWidget().updateGeometry()
+        # child.parentWidget().updateGeometry()
         child.show()
 
     def refresh_forms(self):

@@ -18,6 +18,10 @@ class Field():
         self.max_length = 0
         self.validators = []
 
+    @property
+    def is_foreign_key(self):
+        return self.__class__.__name__ == 'ForeignKey'
+
     def sql(self, field):
         """sql create for field
 

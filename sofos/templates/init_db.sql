@@ -55,4 +55,6 @@ INSERT INTO "xrisi" VALUES(2,2018);
 INSERT INTO "hmerologio" VALUES(1,'Ανοίγματος χρήσης');
 INSERT INTO "hmerologio" VALUES(2,'Γενικό ημερολόγιο');
 INSERT INTO "hmerologio" VALUES(3,'Κλεισίματος χρήσης');
+INSERT INTO "metabolitype" VALUES(1,'ΣΥΜΒΑΣΗ');
+INSERT INTO "metabolitype" VALUES(2,'ΠΡΟΓΡΑΜΜΑ ΕΡΓΑΣΙΑΣ');
 COMMIT;

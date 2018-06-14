@@ -22,20 +22,19 @@ class TTextButton(Qw.QWidget):
             self.idv = ''
             self._set_state(0)
             return
+        # dicval = self._model.search_by_id(idv)
         dicval = self._model.search_by_id_deep(idv)
         self._set_state(1 if dicval else 0)
         self.txt_initial = self._rpr(dicval)
         self.rpr = self.txt_initial
         self.text.setText(self.txt_initial)
-        self.setToolTip(self.txt_initial)
+        # self.setToolTip(self.txt_initial)
+        self.setToolTip('\n'.join(['%s:%s' % (i, j) for i, j in dicval.items()]))
         self.text.setCursorPosition(0)
         self.idv = dicval['id']
 
     def _rpr(self, dicval):
-        ltxt = []
-        for key in dicval:
-            if key != 'id':
-                ltxt.append(str(dicval[key]))
+        ltxt = [str(dicval[key]) for key in self._model.repr_fields()]
         return ' '.join(ltxt)
 
     def _create_gui(self):
