@@ -107,46 +107,68 @@ class Model():
         return 'SELECT * FROM %s' % cls.__name__.lower()
 
     @classmethod
-    def sql_select_all_deep(cls, field_list=None, label_list=None,
-                            qt_widget_list=None, joins=None):
-        """Returns sql with all relations of table
-
-        :param dbf: Database file
-        :param field_list: A list of fields (for recursion)
-        :param label_list: A list of labels (for recursion)
-        :param qt_widget_list: A list of qt_widgets (for recursion)
-        :param joins: A list of joins (for recursion)
-        """
-        table_name = cls.__name__.lower()
-        # flds = cls.repr_fields()
-        flds = cls.field_names()
-        fld_dic = {table_name: []}
-        field_list = field_list or ['%s.id' % table_name]
-        label_list = label_list or ['ΑΑ']
-        qt_widget_list = qt_widget_list or ['int']
-        joins = joins or []
-        for fld_name in flds:
-            field = cls.field_object(fld_name)
-            # if object_fld.__class__.__name__ == 'ForeignKey':
-            if field.is_foreign_key:
-                ftbl = field.ftable.table_name()
-                if field.null:
-                    intl = 'LEFT JOIN %s ON %s.id=%s.%s'
-                else:
-                    intl = 'INNER JOIN %s ON %s.id=%s.%s'
-                joins.append(intl % (ftbl, ftbl, table_name, fld_name))
-                fld_dic[table_name].append(
-                    field.ftable.sql_select_all_deep(
-                        field_list, label_list, qt_widget_list, joins))
+    def deep_labels(cls, alias=None):
+        # tbl = cls.__name__.lower()
+        lbl = []
+        for field_name in cls.field_names():
+            fld = cls.field_object(field_name)
+            if fld.is_foreign_key:
+                lbl += fld.ftable.deep_labels(field_name)
             else:
-                fld_dic[table_name].append('%s.%s' % (table_name, fld_name))
-                field_list.append('%s.%s' % (table_name, fld_name))
-                label_list.append(field.label)
-                qt_widget_list.append(field.qt_widget)
+                lbl.append(fld.label)
+        return lbl
+
+    @classmethod
+    def deep_widgets(cls, alias=None):
+        lbl = []
+        for field_name in cls.field_names():
+            fld = cls.field_object(field_name)
+            if fld.is_foreign_key:
+                lbl += fld.ftable.deep_widgets(field_name)
+            else:
+                lbl.append(fld.qt_widget)
+        return lbl
+
+    @classmethod
+    def deep_fields(cls, alias=None):
+        tbl = cls.__name__.lower()
+        tvl = []
+        for field_name in cls.field_names():
+            fld = cls.field_object(field_name)
+            if fld.is_foreign_key:
+                tvl += fld.ftable.deep_fields(field_name)
+            else:
+                tvl.append('%s.%s' % (alias or tbl, field_name))
+        return tvl
+
+    @classmethod
+    def deep_joins(cls, alias=None):
+        tbl = cls.__name__.lower()
+        atbl = alias or tbl
+        joins = []
+        for fname in cls.field_names():
+            fld = cls.field_object(fname)
+            if fld.is_foreign_key:
+                ftable = fld.ftable.table_name()
+                if fld.null:
+                    intl = 'LEFT JOIN %s AS %s ON %s.id=%s.%s'
+                else:
+                    intl = 'INNER JOIN %s AS %s ON %s.id=%s.%s'
+                joins.append(intl % (ftable, fname, fname, atbl, fname))
+                joins += fld.ftable.deep_joins(fname)
+        return joins
+
+    @classmethod
+    def sql_select_all_deep(cls):
+        tbl = cls.__name__.lower()
+        flds = ['%s.id' % tbl] + cls.deep_fields()
+        lbls = ['AA'] + cls.deep_labels()
+        qtws = ['int'] + cls.deep_widgets()
+        joins = cls.deep_joins()
         sqt = "SELECT %s\nFROM %s\n%s"
-        sql = sqt % (', '.join(field_list), table_name, '\n'.join(joins))
-        return {'sql': sql, 'labels': label_list, 'cols': field_list,
-                'qt_widgets_types': qt_widget_list, 'colnum': len(field_list)}
+        sql = sqt % (', '.join(flds), tbl, '\n'.join(joins))
+        return {'sql': sql, 'labels': lbls, 'cols': flds,
+                'qt_widgets_types': qtws, 'colnum': len(flds)}
 
     @classmethod
     def save(cls, dva):
