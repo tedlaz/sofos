@@ -115,7 +115,6 @@ class DayHours(Qw.QDialog):
         val = '%s-%s' % (self.apo.text(), self.eos.text())
         if val == "00:00-00:00":
             val = ""
-        print('value is :', val)
         self.accept()
 
 

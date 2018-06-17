@@ -23,4 +23,4 @@ class UForm(Qw.QDialog):
         self.setLayout(layout)
         txtv = Qw.QTextEdit(self)
         layout.addWidget(txtv)
-        txtv.setText('%s' % self.model.table_objects())
+        txtv.setText('\n'.join(self.model.table_objects()))

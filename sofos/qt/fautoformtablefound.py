@@ -9,6 +9,9 @@ class AutoFormTableFound(AutoFormTable):
         super().__init__(model, parent)
         self.tbl.cellDoubleClicked.disconnect(self._edit_record)
         self.tbl.cellDoubleClicked.connect(self.accept)
+        # keyv = "FormSize/%s" % self.model.table_name()
+        # self.resize(self.settings.value(keyv, Qc.QSize(300, 240)))
+        self.resize(Qc.QSize(640, 480))
 
     def _get_data(self):
         return self.model.search_deep(self.search_string)

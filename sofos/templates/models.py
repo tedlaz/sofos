@@ -147,10 +147,10 @@ class Proslipsi(models.Model):
 
 
 class Apoxorisi(models.Model):
-    pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
-    dap = models.DateEmptyField('Ημ/νία αποχώρησης')
+    pro = models.ForeignKey(Proslipsi, 'Πρόσλ.Εργαζομένου', unique=True)
+    dap = models.DateField('Ημ/νία αποχώρησης')
     apot = models.ForeignKey(ApoxorisiType, 'Τύπος απόχώρησης',
-                             qt_widget='combo', null=True)
+                             qt_widget='combo')
 
     class Meta:
         table_label = 'Αποχωρήσεις'

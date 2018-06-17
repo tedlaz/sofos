@@ -9,7 +9,6 @@ class TTextButton(Qw.QWidget):
         """parent must have ._dbf"""
         super().__init__(parent)
         self._parent = parent
-        # self._dbf = parent._dbf
         self._model = model
         self.txt_initial = ''
         # Create Gui
@@ -22,16 +21,20 @@ class TTextButton(Qw.QWidget):
             self.idv = ''
             self._set_state(0)
             return
-        # dicval = self._model.search_by_id(idv)
         dicval = self._model.search_by_id_deep(idv)
         self._set_state(1 if dicval else 0)
         self.txt_initial = self._rpr(dicval)
         self.rpr = self.txt_initial
         self.text.setText(self.txt_initial)
         # self.setToolTip(self.txt_initial)
-        self.setToolTip('\n'.join(['%s:%s' % (i, j) for i, j in dicval.items()]))
+        fld_list = ['%s:%s' % (i, j) for i, j in dicval.items()]
+        self.setToolTip('\n'.join(fld_list))
         self.text.setCursorPosition(0)
         self.idv = dicval['id']
+
+    def tooltip(self):
+        flds = self._model.deep_fields()
+        lbls = self._model.deep_labels()
 
     def _rpr(self, dicval):
         ltxt = [str(dicval[key]) for key in self._model.repr_fields()]
@@ -51,6 +54,7 @@ class TTextButton(Qw.QWidget):
         # Connections
         self.text.textChanged.connect(self._text_changed)
         self.button.clicked.connect(self._button_clicked)
+        # self.button.clicked.connect(self._edit_record)
 
     def _set_state(self, state):
         self._state = state
@@ -99,3 +103,15 @@ class TTextButton(Qw.QWidget):
 
     def get(self):
         return self.idv
+
+    def _edit_record(self):
+        from .fautoform import AutoForm
+        dialog = AutoForm(self._model, self.idv, parent=self)
+        main_window = self.parent().parent().parent().parent()
+        if hasattr(main_window, 'refresh_forms'):
+            dialog.val_updated.connect(main_window.refresh_forms)
+        if dialog.exec_() == Qw.QDialog.Accepted:
+            pass
+            # self._populate()
+        else:
+            return False

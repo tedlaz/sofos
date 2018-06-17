@@ -11,6 +11,7 @@ class AutoForm(Qw.QDialog):
     def __init__(self, model, idv=None, parent=None):
         super().__init__(parent)
         self.setAttribute(Qc.Qt.WA_DeleteOnClose)
+        self.locked = False
         self._set(model, idv)
         self._wtitle()
         self._create_layouts()
@@ -46,7 +47,7 @@ class AutoForm(Qw.QDialog):
         self.buttonlayout.addWidget(self.bsave)
         # Make connections
         self.bcancel.clicked.connect(self.close)
-        self.bsave.clicked.connect(self.save)
+        self.bsave.clicked.connect(self.btnsave)
 
     def _create_fields(self):
         lbs = self.model.field_labels()
@@ -63,6 +64,7 @@ class AutoForm(Qw.QDialog):
         self.vals = self.model.search_by_id(self._id)
         for key in self.widgets:
             self.widgets[key].set(self.vals[key])
+        self.lock()
 
     @property
     def get_data(self):
@@ -70,6 +72,25 @@ class AutoForm(Qw.QDialog):
         for fld in self.widgets:
             data[fld] = self.widgets[fld].get()
         return data
+
+    def lock(self):
+        for widget in self.widgets.values():
+            widget.setEnabled(False)
+            
+        self.bsave.setText('Edit')
+        self.locked = True
+
+    def unlock(self):
+        for widget in self.widgets.values():
+            widget.setEnabled(True)
+        self.bsave.setText('Save')
+        self.locked = False
+
+    def btnsave(self):
+        if self.locked:
+            self.unlock()
+        else:
+            self.save()
 
     def save(self):
         data = self.get_data
