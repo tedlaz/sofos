@@ -27,26 +27,36 @@ class FieldsToView(Qw.QDialog):
         btnlay = Qw.QHBoxLayout()
         layout.addLayout(btnlay)
         btn = Qw.QPushButton('ok')
-        bde = Qw.QPushButton('Set as Default')
+        bde = Qw.QPushButton('cancel')
         btnlay.addWidget(bde)
         btnlay.addWidget(btn)
         bde.setFocusPolicy(Qc.Qt.NoFocus)
         btn.clicked.connect(self.hide_columns)
-        bde.clicked.connect(self.save_as_default)
+        bde.clicked.connect(self.cancel)
+
+    def are_all_hidden(self):
+        total_widgets = len(self.fld_widgets)
+        total_hidden = 0
+        for elm in self.fld_widgets:
+            if not self.fld_widgets[elm].isChecked():
+                total_hidden += 1
+        return total_widgets == total_hidden
 
     def update_sdict(self):
         for elm in self.fld_widgets:
             self.parent().sdict[elm] = self.fld_widgets[elm].isChecked()
 
     def hide_columns(self):
-        self.update_sdict()
-        self.parent().hide_cols()
-        self.accept()
-
-    def save_as_default(self):
+        if self.are_all_hidden():
+            Qw.QMessageBox.critical(
+                self, 'Error', 'Set at least one column visible')
+            return
         self.update_sdict()
         self.parent().hide_cols()
         self.parent().save_settings()
+        self.accept()
+
+    def cancel(self):
         self.accept()
 
 
