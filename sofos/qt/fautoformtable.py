@@ -10,15 +10,22 @@ class FieldsToView(Qw.QDialog):
     def __init__(self, fldList, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Select Visible Fields')
-        self.layout = Qw.QVBoxLayout(self)
+        layout = Qw.QVBoxLayout(self)
+        scroll = Qw.QScrollArea()
+        scroll.setWidgetResizable(True)
+        layout.addWidget(scroll)
+        scont = Qw.QWidget()
+        vlay = Qw.QVBoxLayout(scont)
+        vlay.setAlignment(Qc.Qt.AlignTop)
+        scroll.setWidget(scont)
         self.fields = fldList
         self.fld_widgets = {}
         for elm in fldList:
             self.fld_widgets[elm[0]] = Qw.QCheckBox(elm[1])
             self.fld_widgets[elm[0]].setChecked(elm[2])
-            self.layout.addWidget(self.fld_widgets[elm[0]])
+            vlay.addWidget(self.fld_widgets[elm[0]])
         btnlay = Qw.QHBoxLayout()
-        self.layout.addLayout(btnlay)
+        layout.addLayout(btnlay)
         btn = Qw.QPushButton('ok')
         bde = Qw.QPushButton('Set as Default')
         btnlay.addWidget(bde)
@@ -213,7 +220,7 @@ class AutoFormTable(Qw.QDialog):
         return item
 
     def _weekdayItem(self, strv):
-        weekdays_list = eval(strv)
+        weekdays_list = eval(strv.replace('!', "'"))
         items = []
         for i, wday in enumerate(weekdays_list):
             if wday != '':

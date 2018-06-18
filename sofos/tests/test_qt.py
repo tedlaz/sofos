@@ -115,14 +115,14 @@ class Tests(unittest.TestCase):
 
     def test_TWeekdays_01(self):
         twd = qt.TWeekdays(None)
-        self.assertEqual(twd.get(), '["", "", "", "", "", "", ""]')
+        self.assertEqual(twd.get(), '[!!, !!, !!, !!, !!, !!, !!]')
         # twd = qt.TWeekdays()
         # self.assertEqual(twd.get(), '[1, 1, 1, 1, 1, 0, 0]')
         # self.assertEqual(twd.get(False), [1, 1, 1, 1, 1, 0, 0])
         twd.set([1, 2])
-        self.assertEqual(twd.get(), '["", "", "", "", "", "", ""]')
+        self.assertEqual(twd.get(), '[!!, !!, !!, !!, !!, !!, !!]')
         twd.set5days()
-        self.assertEqual(twd.get(), '["08:00-16:00", "08:00-16:00", "08:00-16:00", "08:00-16:00", "08:00-16:00", "", ""]')
+        self.assertEqual(twd.get(), '[!08:00-16:00!, !08:00-16:00!, !08:00-16:00!, !08:00-16:00!, !08:00-16:00!, !!, !!]')
         QTest.mouseClick(twd, Qc.Qt.RightButton)
         # QTest.mouseClick(twd, Qc.Qt.LeftButton)
 

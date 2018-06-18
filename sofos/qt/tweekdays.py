@@ -214,7 +214,7 @@ class TWeekdays(Qw.QWidget):
 
     def get(self, strVal=True):
         if strVal:
-            return str(self.grid).replace("'", '"')
+            return str(self.grid).replace("'", '"').replace('"', '!')
         else:
             return self.grid
 
@@ -224,7 +224,7 @@ class TWeekdays(Qw.QWidget):
         if darray is None or darray == '':
             darr = '["", "", "", "", "", "", ""]'
         else:
-            darr = str(darray)
+            darr = str(darray).replace('!', "'")
         tmparr = eval(darr)
         if len(tmparr) == 7:
             self.grid = tmparr

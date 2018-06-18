@@ -54,7 +54,8 @@ class AutoForm(Qw.QDialog):
         self.widgets['id'] = TIntegerKey(parent=self)
         self.widgets['id'].setVisible(False)
         for i, fld in enumerate(self.model.field_names()):
-            self.widgets[fld] = wselector(self.model.field_object(fld), self)
+            # self.widgets[fld] = wselector(self.model.field_object(fld), self)
+            self.widgets[fld] = self.model.field_object(fld).qwl(self)
             self.fld_layout.insertRow(
                 i, Qw.QLabel(lbs[fld]), self.widgets[fld])
 
@@ -76,7 +77,6 @@ class AutoForm(Qw.QDialog):
     def lock(self):
         for widget in self.widgets.values():
             widget.setEnabled(False)
-            
         self.bsave.setText('Edit')
         self.locked = True
 

@@ -12,7 +12,7 @@ class WeekdaysField(Field):
         self.max_length = max_length
 
     def validate(self, values):
-        result = len(eval(values)) == 7
+        result = len(eval(values.replace('!', "'"))) == 7
         if result:
             return True, 'ok It is array'
         return False, 'Error, it is not an array'

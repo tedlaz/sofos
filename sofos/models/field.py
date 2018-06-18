@@ -1,4 +1,5 @@
 """Abstract class Field"""
+from .. import qt
 
 
 class Field():
@@ -17,6 +18,9 @@ class Field():
         self.min_length = 0
         self.max_length = 0
         self.validators = []
+
+    def qwl(self, parent):
+        return qt.widget_selector.wselector(self, parent)
 
     @property
     def is_foreign_key(self):

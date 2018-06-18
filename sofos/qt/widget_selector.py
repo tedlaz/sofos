@@ -48,3 +48,37 @@ def wselector(field, parent):
         return TTextLine(parent=parent)
     else:
         return TTextLine(parent=parent)
+
+
+def widget_by_name(fld_name, parent, ftable=None):
+    """Factory to create widgets
+
+    :param field: object field
+    :param parent: parent object
+
+    :return: A customized qt widget
+    """
+    if fld_name == 'int':
+        return TInteger(parent=parent)
+    elif fld_name == 'text_button':
+        return TTextButton(None, ftable, parent)
+    elif fld_name == 'combo':
+        return TComboDB(None, ftable, parent)
+    elif fld_name == 'check_box':
+        return TCheckbox(parent=parent)
+    elif fld_name == 'date':
+        return TDate(parent=parent)
+    elif fld_name == 'date_or_empty':
+        return TDateEmpty(parent=parent)
+    elif fld_name == 'num':
+        return TNumeric(parent=parent)
+    elif fld_name == 'text_num':
+        return TTextlineNum(parent=parent)
+    elif fld_name == 'text':
+        return TText(parent=parent)
+    elif fld_name == 'week_days':
+        return TWeekdays(parent=parent)
+    elif fld_name == 'str':
+        return TTextLine(parent=parent)
+    else:
+        return TTextLine(parent=parent)
