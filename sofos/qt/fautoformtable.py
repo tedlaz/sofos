@@ -49,7 +49,7 @@ class FieldsToView(Qw.QDialog):
     def hide_columns(self):
         if self.are_all_hidden():
             Qw.QMessageBox.critical(
-                self, 'Error', 'Set at least one column visible')
+                self, 'Error', 'Set at least one visible column ')
             return
         self.update_sdict()
         self.parent().hide_cols()
@@ -155,6 +155,11 @@ class AutoFormTable(Qw.QDialog):
                     item = self._numItem(val)
                 elif qt_widget == 'date':
                     item = SortWidgetItem(gr.date2gr(val), val)
+                elif qt_widget == 'date_or_empty':
+                    if len(str(val)) > 0:
+                        item = SortWidgetItem(gr.date2gr(val), val)
+                    else:
+                        item = self._strItem(val)
                 elif qt_widget == 'week_days':
                     item = self._weekdayItem(val)
                 else:
@@ -209,7 +214,7 @@ class AutoFormTable(Qw.QDialog):
         if success:
             self._populate()
         else:
-            Qw.QMessageBox.critical(self, "Delete Error", msg)
+            Qw.QMessageBox.critical(self, "Not allowed to delete", msg)
 
     def _intItem(self, num):
         item = Qw.QTableWidgetItem()

@@ -41,10 +41,23 @@ class Model():
 
         :param field_name: Field name
         """
-        return getattr(cls, field_name)
+        if hasattr(cls, field_name):
+            return getattr(cls, field_name)
+        return None
 
     @classmethod
     def field_labels(cls):
+        """Get a dictionary of field labels
+        :return: dictionary of the form: {'fld_name': fld_label, ...}
+        """
+        field_labels_dic = {'id': 'Νο'}
+        for field in cls.field_names():
+            cfield = getattr(cls, field)
+            field_labels_dic[field] = cfield.label
+        return field_labels_dic
+
+    @classmethod
+    def labels(cls):
         """Get a dictionary of field labels
         :return: dictionary of the form: {'fld_name': fld_label, ...}
         """
@@ -113,9 +126,20 @@ class Model():
         for field_name in cls.field_names():
             fld = cls.field_object(field_name)
             if fld.is_foreign_key:
-                lbl += fld.ftable.deep_labels(field_name)
+                lbl += fld.ftable.deep_labels()
             else:
                 lbl.append(fld.label)
+        return lbl
+
+    @classmethod
+    def deep_labels2(cls):
+        lbl = {}
+        for field_name in cls.field_names():
+            fld = cls.field_object(field_name)
+            if fld.is_foreign_key:
+                lbl = {**lbl, **fld.ftable.deep_labels2()}
+            else:
+                lbl['%s.%s' % (cls.table_name(), field_name)] = fld.label
         return lbl
 
     @classmethod
@@ -211,7 +235,7 @@ class Model():
             sql = "DELETE FROM %s WHERE id='%s';" % (cls.table_name(), idv)
             return df.delete(cls.__dbf__, sql)
         else:
-            return False, 'Record exists in relation'
+            return False, 'Record participates in relation'
 
     @classmethod
     def select_all(cls):

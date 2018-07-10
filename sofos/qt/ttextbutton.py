@@ -37,6 +37,7 @@ class TTextButton(Qw.QWidget):
         lbls = self._model.deep_labels()
 
     def _rpr(self, dicval):
+        # print('line 40:', self._model.repr_fields(), dicval)
         ltxt = [str(dicval[key]) for key in self._model.repr_fields()]
         return ' '.join(ltxt)
 

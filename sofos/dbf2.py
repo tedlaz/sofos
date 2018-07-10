@@ -1,131 +1,144 @@
 import os.path
 import sqlite3
-# from . import gr
 
 
-def _sql_safe(data):
-    """
-    {'typ': 'insert', 'table': 'erg',
-     'fields': {'epo': 'Lazaros', 'ono': }}
-    """
-    sql = ''
-    vls = []
-    if data['typ'] == 'insert':
-        sqt = 'INSERT INTO {tbl} ({flds}) VALUES ({vals});'
-        fls = ', '.join([f for f in data['fields'].keys()])
-        val = ', '.join(['?' for f in data['fields'].values()])
-        sql = sqt.format(tbl=data['table'], flds=fls, vals=val)
-        vls = [f for f in data['fields'].values()]
-    elif data['typ'] == 'update':
-        assert 'id' in data['fields'].keys()
-        sqt = "UPDATE {tbl} set {flds} WHERE id=?;"
-        fls = ', '.join(["%s=?" % k for k, v in
-                         data['fields'].items() if k != 'id'])
-        sql = sqt.format(tbl=data['table'],
-                         flds=fls,
-                         id=data['fields']['id'])
-        vls = [v for k, v in data['fields'].items() if k != 'id']
-        vls.append(data['fields']['id'])
-    elif data['typ'] == 'delete':
-        assert 'id' in data['fields'].keys()
-        sqt = "DELETE FROM {tbl} WHERE id=?;"
-        sql = sqt.format(tbl=data['table'])
-        vls = [data['fields']['id']]
-    print(sql, tuple(vls))
-    return sql, tuple(vls)
+def sql_insert(table, adic, fkey_field=None):
+    sqt = 'INSERT INTO {tbl} ({flds}) VALUES ({vals});'
+    fls = ', '.join([i for i in adic.keys() if i != 'id'])
+    val = []
+    for key, value in adic.items():
+        if key == 'id':
+            continue
+        elif key == fkey_field:
+            val.append("'{idv}'")
+        else:
+            val.append("'%s'" % value)
+    return sqt.format(tbl=table, flds=fls, vals=', '.join(val))
 
 
-def save(dbf, datadic):
-    sql, vals = _sql_safe(datadic)
-    if not os.path.isfile(dbf):
-        return False, 'File %s does not exist' % dbf
-    with sqlite3.connect(dbf) as con:
-        cur = con.cursor()
-        cur.execute(sql, vals)
-        return cur.lastrowid
+def sql_update(table, adic, fkey_field=None):
+    sqt = "UPDATE %s set {flds} WHERE id='%s';" % (table, adic['id'])
+    fls = []
+    for key, val in adic.items():
+        if key == 'id':
+            continue
+        if key == fkey_field:
+            fls.append("%s='{idv}'" % key)
+        else:
+            fls.append("%s='%s'" % (key, val))
+    # fls = ', '.join(["%s='%s'" % (k, v)for k, v in adic.items() if k != 'id'])
+    return sqt.format(flds=', '.join(fls))
 
 
-def save_one2many(dbf, datadic):
-    one = datadic['one']
-    many = datadic['many']
-    fkey = datadic['fkey']
-    sql, vals = _sql_safe(one)
-    if not os.path.isfile(dbf):
-        return False, 'File %s does not exist' % dbf
-    with sqlite3.connect(dbf) as con:
-        cur = con.cursor()
-        cur.execute(sql, vals)
-        key = cur.lastrowid
-        if key == 0:
-            key = one['fields']['id']
-        for lin in many:
-            if one['typ'] == 'delete':
-                lin['typ'] = 'delete'
-            lin['fields'][fkey] = key
-            sql, vals = _sql_safe(lin)
-            cur.execute(sql, vals)
-        con.commit()
+def sql_save(table, adic, key=None):
+    idv = adic.get('id', '')
+    if idv == '':
+        return sql_insert(table, adic, key)
+    return sql_update(table, adic, key)
 
 
-def save_one2many2(dbf, ddi):
-    dfff = {'table-master': 'erg',
-            'table-detail': 'ergd',
-            'key': 'erg',
-            'delete-master-id': 13,
-            'save-master': {'id': '', 'epo': 'Lazaros'},
-            'save-detail': [{'id': '', 'r1': 'vl1'},
-                            {'id': '', 'r1': 'vl2'}],
-            'delete-detail-ids': [12, 15]
-            }
-    assert ddi.get('table-master', False)
-    if ddi.get('table-detail', None) or ddi.get('key', None):
-        assert ddi.get('key', None) and ddi.get('key', None)
-    if ddi.get('delete-master-id', None):
-        # Όλο το πακέτο είναι για διαγραφή
-        if ddi.get('table-detail') and ddi.get
-    table_master = ddi['table-master']
-    table_detail = ddi.get('table-detail', None)
+def sql_delete(table, field, idv):
+    return "DELETE FROM %s WHERE %s='%s';" % (table, field, idv)
+
+
+def sql_transaction(sql_list):
+    return 'BEGIN;\n' + '\n'.join(sql_list) + '\nCOMMIT;'
+
+
+def sql_save_one2many(ddi):
+    master = ddi.get('master', None)
     key = ddi.get('key', None)
-    one = datadic['one']
-    many = datadic['many']
-    fkey = datadic['fkey']
-    sql, vals = _sql_safe(one)
+    # Πρέπει πάντα να υπάρχει τιμή για το table-master
+    assert master
+    # Πρέπει ή και τα δύο ή κανένα από τα δύο
+    detail = ddi.get('detail', None)
+    if detail or key:
+        assert detail and key
+    # Ολοκληρωτική διαγραφή με βάση το id
+    del_key = ddi.get('delete-master-id', None)
+    if del_key:
+        sqm = sql_delete(master, 'id', del_key)
+        sqd = sql_delete(detail, key, del_key)
+        return '', sqm, [sqd, ], []
+    dmaster = ddi.get('dmaster', {})
+    sqm = sql_save(master, dmaster)
+    ddetail = ddi.get('ddetail', {})
+    sqd = [sql_save(detail, i, key) for i in ddetail]
+    idv = dmaster.get('id', '')
+    del_dkeys = ddi.get('delete-detail-ids', [])
+    sqdel = [sql_delete(detail, 'id', idv) for idv in del_dkeys]
+    return idv, sqm, sqd, sqdel
+
+
+def save_one2many(dbf, idv, sqm, sqd, sqdel):
     if not os.path.isfile(dbf):
         return False, 'File %s does not exist' % dbf
     with sqlite3.connect(dbf) as con:
         cur = con.cursor()
-        cur.execute(sql, vals)
-        key = cur.lastrowid
-        if key == 0:
-            key = one['fields']['id']
-        for lin in many:
-            if one['typ'] == 'delete':
-                lin['typ'] = 'delete'
-            lin['fields'][fkey] = key
-            sql, vals = _sql_safe(lin)
-            cur.execute(sql, vals)
+        cur.execute(sqm)
+        key = idv or cur.lastrowid
+        for sqt in sqd:
+            cur.execute(sqt.format(idv=key))
+        for sql in sqdel:
+            cur.execute(sql)
         con.commit()
+
+
+def save(dbf, datadict):
+    """
+    :param dbf: Database file path
+    :param datadict: dictionary with keys
+        master  : Master table name.
+        detail  : Detail table name.
+        key     : field of detail foreign key to master.
+        dmaster : Dictionary with master record data.
+        ddetail : List of dictionaries with detail records.
+        del-id  : If present delete all with this id.
+        ddel-ids: List of detail ids to delete.
+    """
+    idv, sqm, sqd, sqdel = sql_save_one2many(datadict)
+    save_one2many(dbf, idv, sqm, sqd, sqdel)
+
+
+def sel(dbf, master, detail, key, idv):
+    sqt = 'SELECT * FROM %s WHERE %s=%s'
+    sqm = sqt % (master, 'id', idv)
+    sqd = sqt % (detail, key, idv)
+    fdi = {'master': master, 'detail': detail, 'key': key}
+    with sqlite3.connect(dbf) as con:
+        try:
+            cur = con.cursor()
+            cur.execute(sqm)
+            rowm = cur.fetchone()
+            dmaster = dict(zip([c[0] for c in cur.description], rowm))
+            cur.execute(sqd)
+            rows = cur.fetchall()
+            dd = [dict(zip([c[0] for c in cur.description], r)) for r in rows]
+        except Exception as err:
+            fdi['dmaster'] = {}
+            fdi['ddetail'] = []
+            fdi['error'] = err
+            return fdi
+    fdi['dmaster'] = dmaster
+    fdi['ddetail'] = dd
+    return fdi
 
 
 if __name__ == '__main__':
-    dbf = '/home/ted/devtest/tst'
-    ddi = {'typ': 'insert', 'table': 'erg',
-           'fields': {'epo': 'Laz', 'ono': 'Ted'}}
-    ddb = {'typ': 'master-detail', 'master': 'tr', 'detail': 'trd'}
-    print(save(dbf, ddi))
-    ddi['typ'] = 'update'
-    ddi['fields']['id'] = 2
-    ddi['fields']['epo'] = 'Dazea'
-    print(save(dbf, ddi))
-    ddi['fields']['id'] = 3
-    ddi['typ'] = 'delete'
-    print(save(dbf, ddi))
-    fff = {'one': {'typ': 'delete', 'table': 'tr',
-                   'fields': {'id': 1, 'date': '2018-01-01', 'par': 'tim112'}},
-           'many': [{'typ': 'update', 'table': 'trd',
-                     'fields': {'id': 1, 'tr': '', 'poso': 100}},
-                    {'typ': 'insert', 'table': 'trd',
-                     'fields': {'id': 5, 'poso': 888}}
-                    ],
-           'fkey': 'tr'}
-    save_one2many(dbf, fff)
+    dbf = '/home/ted/devtest/ted1/tst.sql3'
+    dff = {'master': 'tran',
+           'detail': 'trand',
+           'key': 'tran',
+           'delete-master-id': 5,
+           'dmaster': {'id': '', 'par': 'TIM689', 'per': 'Αγορές γενικά'},
+           'ddetail': [{'id': '', 'tran': '', 'lmo': '20', 'xr': 5, 'pi': 0},
+                       {'id': '', 'tran': '', 'lmo': '54', 'xr': 2, 'pi': 0},
+                       {'id': '', 'tran': '', 'lmo': '50', 'xr': 0, 'pi': 7},
+                       ],
+           'delete-detail-ids': [5, 6]
+           }
+    # save(dbf, dff)
+    print(sql_insert('pel', {'epo': 'Ted', 'ono': 'Lazaros'}))
+    print(sql_update('pel', {'id': 1, 'epo': 'Tedd', 'ono': 'Lazarof'}))
+    print(sql_delete('pel', 'id', 1))
+    print(sel(dbf, 'tran', 'trand', 'tran', '3'))

@@ -58,9 +58,9 @@ class Erg(models.Model):
     afm.add_validator(_validators.validate_afm)
 
     class Meta:
-        unique_together = ['epo', 'ono']
+        unique_together = ('epo', 'ono')
         table_label = 'Εργαζόμενοι'
-        repr_fields = ['epo', 'ono']
+        repr_fields = ('epo', 'ono')
 
     def __str__(self):
         return '%s %s' % (self.epo, self.ono)
@@ -81,7 +81,7 @@ class Parartima(models.Model):
 
     class Meta:
         table_label = "Παράρτημα"
-        repr_fields = ['par']
+        repr_fields = ('par',)
 
 
 class ApodoxesType(models.Model):
@@ -106,7 +106,7 @@ class Eidikotita(models.Model):
 
     class Meta:
         table_label = "Ειδικότητα εργασίας"
-        repr_fields = ['eip']
+        repr_fields = ('eip',)
 
 
 class ApasxolisiType(models.Model):
@@ -143,7 +143,7 @@ class Proslipsi(models.Model):
 
     class Meta:
         table_label = 'Προσλήψεις'
-        repr_fields = ['epo', 'ono', 'dpr']
+        repr_fields = ('epo', 'ono', 'dpr')
 
 
 class Apoxorisi(models.Model):
@@ -200,11 +200,11 @@ class Minas(models.Model):
 
 class Paroysies(models.Model):
     """Παρουσίες εργαζομένων"""
-    xri = models.ForeignKey(Xrisi, 'Χρήση', qt_widget='combo')
+    xrisi = models.ForeignKey(Xrisi, 'Χρήση', qt_widget='combo')
     mon = models.ForeignKey(Minas, 'Μήνας', qt_widget='combo')
 
     class Meta:
-        unique_together = ('xri', 'mon')
+        unique_together = ('xrisi', 'mon')
         table_label = "Παρουσίες"
         table_child_name = "ParousiesDetails"
 
@@ -218,32 +218,52 @@ class ParoysiaType(models.Model):
         table_label = "Τύπος παρουσίας"
 
 
-class ParoysiesDetails(models.Model):
+class ParoysiesNormal(models.Model):
     """Παρουσίες εργαζομένων αναλυτικά"""
-    mpa = models.ForeignKey(Paroysies, 'Χρήση/Περίοδος', qt_widget='combo')
+    mpa = models.ForeignKey(Paroysies, 'Χρήση/Περίοδος')
     pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
-    pty = models.ForeignKey(ParoysiaType, 'Τύπος παρουσίας', qt_widget='combo')
-    apo = models.DateEmptyField('Από')
-    eos = models.DateEmptyField('Έως')
-    # Κανονικές
     mno = models.IntegerField('Ημέρες εργασίας', default=0)
     mad = models.IntegerField('Ημέρες άδειας με αποδοχές', default=0)
     maa = models.IntegerField('Ημέρες άδειας χωρίς αποδοχές', default=0)
     ony = models.IntegerField('Ώρες νυχτ.προσαύξησης', default=0)
     arm = models.IntegerField('Ημέρες αργίας', default=0)
     aor = models.IntegerField('Ώρες αργίας', default=0)
-    # Ασθένεια
+    apo = models.DateEmptyField('Από')
+    eos = models.DateEmptyField('Έως')
+
+    class Meta:
+        unique_together = ('mpa', 'pro')
+        table_label = "Παρουσίες εργαζομένων"
+
+
+class ParoysiesAstheneia(models.Model):
+    """Ασθένεια εργαζομένων"""
+    mpa = models.ForeignKey(Paroysies, 'Χρήση/Περίοδος')
+    pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
+    apo = models.DateEmptyField('Από')
+    eos = models.DateEmptyField('Έως')
     ml3 = models.IntegerField('Ημέρες ασθένειας < 3', default=0)
     mm3 = models.IntegerField('Ημέρες ασθένειας > 3', default=0)
     mm0 = models.IntegerField('Ημέρες ασθένειας χωρίς αποδοχές', default=0)
     epi = models.DecimalField('Επίδομα ΙΚΑ')
-    # Υπερωρίες
-    yp1 = models.IntegerField('Υπερωρίες 1 ώρες', default=0)
-    yp2 = models.IntegerField('Υπερωρίες 2 ώρες', default=0)
 
     class Meta:
-        unique_together = ('mpa', 'pro', 'pty', 'apo')
-        table_label = "Παρουσία εργαζομένου"
+        unique_together = ('mpa', 'pro', 'apo')
+        table_label = "Ασθένεια εργαζομένων"
+
+
+class ParoysiesYperories(models.Model):
+    """Υπερωρίες εργαζομένων"""
+    mpa = models.ForeignKey(Paroysies, 'Χρήση/Περίοδος')
+    pro = models.ForeignKey(Proslipsi, 'Εργαζόμενος')
+    yp1 = models.IntegerField('Υπερωρίες 1 ώρες', default=0)
+    yp2 = models.IntegerField('Υπερωρίες 2 ώρες', default=0)
+    apo = models.DateEmptyField('Από')
+    eos = models.DateEmptyField('Έως')
+
+    class Meta:
+        unique_together = ('mpa', 'pro')
+        table_label = "Υπερωρίες εργαζομένων"
 
 
 class MisthodosiaType(models.Model):

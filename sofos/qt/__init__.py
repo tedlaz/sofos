@@ -19,4 +19,5 @@ from .ffindform import FindForm
 from .fautoformtable import AutoFormTable
 from .fautoformtablewidget import AutoFormTableWidget
 from .fautoformtablefound import AutoFormTableFound
+from .fmasterdetail import MasterDetail
 # from .widget_selector import wselector
