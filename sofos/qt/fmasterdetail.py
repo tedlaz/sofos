@@ -22,6 +22,7 @@ class MasterDetail(Qw.QDialog):
         self._create_Buttons()
         self._create_fields()
         self.populate()
+        self._new_detail_line()
 
     def _wtitle(self):
         self.setWindowTitle('{}: {}'.format(
@@ -68,7 +69,7 @@ class MasterDetail(Qw.QDialog):
         self.tbl.setHorizontalHeaderLabels(self.detail.field_labels().values())
 
     def _create_master_fields(self):
-        print(len(self.master.field_labels()))
+        # if number of fields is more than 8 create another column fo fields
         cols = ((len(self.master.field_labels()) - 2) // 8) + 1
         lbs = self.master.field_labels()
         self.mwidgets['id'] = TIntegerKey(parent=self)
@@ -84,9 +85,17 @@ class MasterDetail(Qw.QDialog):
             self.master_layout.addWidget(self.mwidgets[fld], j, (2 * k) + 1)
 
     def _new_detail_line(self):
-        self.tbl.setRowCount(self.tbl.rowCount() + 1)
+        row = self.tbl.rowCount()
+        self.tbl.setRowCount(row + 1)
+        dwidgets = {'id': TIntegerKey(parent=self)}
+        self.tbl.setCellWidget(row, 0, dwidgets['id'])
         for i, fld in enumerate(self.detail.field_names()):
-            print(i, fld)
+            dwidgets[fld] = wselector(self.detail.field_object(fld), self)
+            self.tbl.setCellWidget(row, i + 1,  dwidgets[fld])
+            if fld == self.key:
+                self.tbl.hideColumn(i + 1)
+        self.dwidgets.append(dwidgets)
+        self.tbl.hideColumn(0)
 
     def _init_table(self):
         tbl = Qw.QTableWidget(self)
@@ -119,15 +128,20 @@ class MasterDetail(Qw.QDialog):
         for key in self.mwidgets:
             self.mwidgets[key].set(self.vals[key])
 
-    @property
     def get_data(self):
         data = {}
-        for fld in self.widgets:
-            data[fld] = self.widgets[fld].get()
+        for fld in self.mwidgets:
+            data[fld] = self.mwidgets[fld].get()
+        data['z'] = []
+        for i, line in enumerate(self.dwidgets):
+            data['z'].append({})
+            for fld in line:
+                data['z'][i][fld] = line[fld].get()
+        print(data)
         return data
 
     def save(self):
-        data = self.get_data
+        data = self.get_data()
         validated, errors = self.model.validate(data)
         if not validated:
             Qw.QMessageBox.information(self, "Error", '\n'.join(errors))
