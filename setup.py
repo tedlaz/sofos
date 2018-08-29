@@ -12,8 +12,8 @@ if sys.hexversion < 0x3040000:
 
 setup(name='sofos',
       version='0.9.5',
-      description='Create Easily Gui Database Applications',
-      long_description='',
+      description='Gui Database Applications Generator',
+      long_description='Create Gui Database Applications fast',
       url='https://github.com/tedlaz/sofos',
       keywords=["database", "gui", "pyqt5"],
       author='Ted Lazaros',
