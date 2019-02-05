@@ -2,6 +2,7 @@ import json
 import PyQt5.QtWidgets as Qw
 import PyQt5.QtCore as Qc
 from sofos.qt import widget_selector as ws
+from . import translations as tr
 
 
 class AbstractForm(Qw.QDialog):
@@ -20,8 +21,8 @@ class AbstractForm(Qw.QDialog):
         self.create_gui()
 
     def add_buttons(self):
-        self.bcancel = Qw.QPushButton(u'Cancel', self)
-        self.bsave = Qw.QPushButton(u'Save', self)
+        self.bcancel = Qw.QPushButton(tr.tr_cancel, self)
+        self.bsave = Qw.QPushButton(tr.tr_save, self)
         # Make them loose focus
         self.bcancel.setFocusPolicy(Qc.Qt.NoFocus)
         self.bsave.setFocusPolicy(Qc.Qt.NoFocus)

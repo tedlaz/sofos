@@ -1,0 +1,11 @@
+tr_ok = 'Εντάξει'  # 'ok'
+tr_save = 'Αποθήκευση'  # 'save'
+tr_cancel = 'Ακύρωση'  # 'cancel'
+tr_edit = 'Επεξεργασία'  # 'Edit'
+tr_delete = 'Διαγραφή'  # 'Delete'
+tr_new_record = 'Νέα Εγγραφή' #  'New record'
+tr_visible_fields = 'Διάλεξε ορατά πεδία'  # 'Select Visible Fields'
+tr_error = 'Λάθος'  # 'Error'
+tr_select_visible_column = 'Set at least one visible column '
+tr_not_delete = 'Δεν επιτρέπεται διαγραφή'  # "Not allowed to delete"
+tr_search = 'Αναζήτηση'  # 'Search'

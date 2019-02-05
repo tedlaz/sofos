@@ -4,12 +4,13 @@ from .. import gr
 from .fautoform import AutoForm
 from .settings import WEEKDAYS_FULL
 from .vsortwidgetitem import SortWidgetItem
+from . import translations as tr
 
 
 class FieldsToView(Qw.QDialog):
     def __init__(self, fldList, parent=None):
         super().__init__(parent)
-        self.setWindowTitle('Select Visible Fields')
+        self.setWindowTitle(tr.tr_visible_fields)
         layout = Qw.QVBoxLayout(self)
         scroll = Qw.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -26,8 +27,8 @@ class FieldsToView(Qw.QDialog):
             vlay.addWidget(self.fld_widgets[elm[0]])
         btnlay = Qw.QHBoxLayout()
         layout.addLayout(btnlay)
-        btn = Qw.QPushButton('ok')
-        bde = Qw.QPushButton('cancel')
+        btn = Qw.QPushButton(tr.tr_ok)
+        bde = Qw.QPushButton(tr.tr_cancel)
         btnlay.addWidget(bde)
         btnlay.addWidget(btn)
         bde.setFocusPolicy(Qc.Qt.NoFocus)
@@ -49,7 +50,7 @@ class FieldsToView(Qw.QDialog):
     def hide_columns(self):
         if self.are_all_hidden():
             Qw.QMessageBox.critical(
-                self, 'Error', 'Set at least one visible column ')
+                self, tr.tr_error, tr.tr_select_visible_column)
             return
         self.update_sdict()
         self.parent().hide_cols()
@@ -100,10 +101,10 @@ class AutoFormTable(Qw.QDialog):
         layout.addWidget(self.tbl)
         blay = Qw.QHBoxLayout()
         layout.addLayout(blay)
-        self.bedit = Qw.QPushButton('Edit')
+        self.bedit = Qw.QPushButton(tr.tr_edit)
         self.bedit.setFocusPolicy(Qc.Qt.NoFocus)
         blay.addWidget(self.bedit)
-        self.bnew = Qw.QPushButton('New record')
+        self.bnew = Qw.QPushButton(tr.tr_new_record)
         self.bnew.setFocusPolicy(Qc.Qt.NoFocus)
         blay.addWidget(self.bnew)
 
@@ -177,10 +178,10 @@ class AutoFormTable(Qw.QDialog):
         tbl.setAlternatingRowColors(True)
         tbl.setSortingEnabled(True)
         tbl.setContextMenuPolicy(Qc.Qt.ActionsContextMenu)
-        editAction = Qw.QAction("Edit", self)
+        editAction = Qw.QAction(tr.tr_edit, self)
         editAction.triggered.connect(self._edit_record)
         tbl.addAction(editAction)
-        deleteAction = Qw.QAction("Delete", self)
+        deleteAction = Qw.QAction(tr.tr_delete, self)
         deleteAction.triggered.connect(self._delete_record)
         tbl.addAction(deleteAction)
         tbl.horizontalHeader().setContextMenuPolicy(Qc.Qt.CustomContextMenu)
@@ -214,7 +215,7 @@ class AutoFormTable(Qw.QDialog):
         if success:
             self._populate()
         else:
-            Qw.QMessageBox.critical(self, "Not allowed to delete", msg)
+            Qw.QMessageBox.critical(self, tr.tr_not_delete, msg)
 
     def _intItem(self, num):
         item = Qw.QTableWidgetItem()

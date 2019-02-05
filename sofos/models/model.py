@@ -331,6 +331,7 @@ class Model():
         # data = cls.sql_select_ful_deep()
         sql = "%s WHERE %s.id='%s'" % (data['sql'], cls.__name__, idv)
         _, record = df.read(cls.__dbf__, sql, 'one')
+        # print('model.py:Line 334:record->%s', record, sql)
         return record
 
     # For Deletion

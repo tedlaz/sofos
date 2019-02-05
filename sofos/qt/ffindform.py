@@ -1,13 +1,14 @@
 import PyQt5.QtWidgets as Qw
 import PyQt5.QtCore as Qc
 from .fautoform import AutoForm
+from . import translations as tr
 
 
 class FindForm(AutoForm):
     """Use this form to search each fields values"""
     def __init__(self, model, parent=None):
         super().__init__(model, parent=parent)
-        self.bsave.setText('Search')
+        self.bsave.setText(tr.tr_search)
         self.bsave.setFocusPolicy(Qc.Qt.StrongFocus)
 
     def _save(self):

@@ -333,6 +333,7 @@ class Trans(models.Model):
         table_label = 'Άρθρα'
         table_detail = 'TransDetails'
         table_detail_key = 'tran'
+        repr_fields = ('trdate', 'parko')
 
 
 class TransDetails(models.Model):
@@ -347,9 +348,14 @@ class TransDetails(models.Model):
 
 
 class Testduo(models.Model):
+    tddat = models.DateField('Ημ/νία')
+    parko = models.CharField('Παραστατικό', max_length=20)
     apo = models.ForeignKey(Account, 'Από')
-    sel = models.ForeignKey(Account, 'Σελμ')
+    sel = models.ForeignKey(Account, 'Σε')
     poso = models.DecimalField('Ποσό')
+    per = models.CharField('Περιγραφή', max_length=80)
 
     class Meta:
         table_label = 'Δοκιμή'
+        repr_fields = ('tddat', 'parko')
+        unique_together = ('tddat', 'parko')
